@@ -1,0 +1,6 @@
+protobuf>=5
+grpcio-tools>=1.60
+pytest
+mypy-protobuf
+ruff
+mypy

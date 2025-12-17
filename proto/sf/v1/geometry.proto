@@ -1,0 +1,24 @@
+syntax = "proto3";
+package sf.v1;
+
+message Crs {
+  // EPSG code (e.g., 4326). 0 = unknown/unspecified.
+  uint32 srid = 1;
+}
+
+message Coordinate {
+  double x = 1;
+  double y = 2;
+}
+
+message Point {
+  Coordinate coord = 1;
+}
+
+message Geometry {
+  Crs crs = 1;
+
+  oneof geom {
+    Point point = 10;
+  }
+}
