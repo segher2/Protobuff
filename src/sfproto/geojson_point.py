@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, Union
 
-from sf.v1 import geometry_pb2
+from sfproto.sf.v1 import geometry_pb2
 
 
 
