@@ -27,11 +27,16 @@ message Polygon {
   repeated LinearRing rings = 1; // [outer, hole1, hole2, ...]
 }
 
+message MultiPolygon {
+  repeated Polygon polygons = 1;
+}
+
 message Geometry {
   Crs crs = 1;
 
   oneof geom {
     Point point = 10;
       Polygon polygon = 12;
+      MultiPolygon multipolygon = 13;
   }
 }
