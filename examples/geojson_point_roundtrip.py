@@ -2,6 +2,7 @@ import json
 from sfproto.geojson_point import geojson_point_to_bytes, bytes_to_geojson_point
 from sfproto.geojson_polygon import (geojson_polygon_to_bytes, bytes_to_geojson_polygon,)
 from sfproto.geojson_multipolygon import (geojson_multipolygon_to_bytes, bytes_to_geojson_multipolygon,)
+from sfproto.geojson_linestring import (geojson_linestring_to_bytes, bytes_to_geojson_linestring)
 from pathlib import Path
 
 # function to load the geojson from the file
@@ -40,16 +41,19 @@ geojson_multipolygon = load_geojson('data/MultiPolygon.geojson')
 geojson_bytes_point = json.dumps(geojson_point, separators=(",", ":")).encode("utf-8")
 geojson_bytes_polygon = json.dumps(geojson_polygon, separators=(",", ":")).encode("utf-8")
 geojson_bytes_multipolygon = json.dumps(geojson_multipolygon, separators=(",", ":")).encode("utf-8")
+geojson_bytes_linestring = json.dumps(geojson_linestring, separators=(",", ":")).encode("utf-8")
 
 # -------------------------
 data_point = geojson_point_to_bytes(geojson_point, srid=4326)
 data_polygon = geojson_polygon_to_bytes(geojson_polygon, srid=4326)
 data_multipolygon = geojson_multipolygon_to_bytes(geojson_multipolygon, srid=4326)
+data_linestring = geojson_linestring_to_bytes(geojson_linestring, srid=4326)
 
 # --------------------------
 out_point = bytes_to_geojson_point(data_point)
 out_polygon = bytes_to_geojson_polygon(data_polygon)
 out_multipolygon = bytes_to_geojson_multipolygon(data_multipolygon)
+out_linestring = bytes_to_geojson_linestring(data_linestring)
 
 print("geojson point bytes length:", len(geojson_bytes_point))
 print("protobuf point bytes length:", len(data_point))
@@ -62,3 +66,8 @@ print("================================================")
 print("geojson multipolygon bytes length", len(geojson_bytes_multipolygon))
 print("protobuf multipolygon bytes length", len(data_multipolygon))
 print("out multipolygon geojson:", json.dumps(out_multipolygon))
+print("================================================")
+print("geojson linestring bytes length", len(geojson_bytes_linestring))
+print("protobuf linestring bytes length", len(data_linestring))
+print("out linestring:", json.dumps(out_linestring))
+

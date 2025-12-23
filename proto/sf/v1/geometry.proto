@@ -36,7 +36,8 @@ message Geometry {
 
   oneof geom {
     Point point = 10;
-      Polygon polygon = 12;
-      MultiPolygon multipolygon = 13;
+    LineString line_string = 11;
+    Polygon polygon = 12;
+    MultiPolygon multipolygon = 13;
   }
 }
