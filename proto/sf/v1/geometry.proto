@@ -15,6 +15,10 @@ message Point {
   Coordinate coord = 1;
 }
 
+message LineString {
+  repeated Point points = 1;
+}
+
 message Geometry {
   Crs crs = 1;
 

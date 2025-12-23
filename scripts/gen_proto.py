@@ -30,7 +30,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--out-dir",
-        default="src/sf/v1",
+        default="src/sfproto",
         help="Output directory for generated Python files (default: generated)",
     )
     parser.add_argument(
