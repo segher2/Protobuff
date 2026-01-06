@@ -98,8 +98,6 @@ def geojson_multilinestring_to_bytes(
     return msg.SerializeToString()
 
 
-def bytes_to_geojson_multilinestring(
-    data: bytes
-) -> GeoJSON:
+def bytes_to_geojson_multilinestring(data: bytes) -> GeoJSON:
     msg = geometry_pb2.Geometry.FromString(data)
     return pb_to_geojson_multilinestring(msg)

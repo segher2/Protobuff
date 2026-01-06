@@ -12,6 +12,8 @@ from sfproto.geojson.v1.geojson_featurecollection import (geojson_featurecollect
 # --------------------------------------- v2 ------------------------------------------
 from sfproto.geojson.v2.geojson_point import geojson_point_to_bytes_v2, bytes_to_geojson_point_v2
 from sfproto.geojson.v2.geojson_multipoint import (geojson_multipoint_to_bytes_v2, bytes_to_geojson_multipoint_v2)
+from sfproto.geojson.v2.geojson_linestring import (geojson_linestring_to_bytes_v2, bytes_to_geojson_linestring_v2)
+from sfproto.geojson.v2.geojson_multilinestring import (geojson_multilinestring_to_bytes_v2, bytes_to_geojson_multilinestring_v2)
 
 from pathlib import Path
 
@@ -70,7 +72,8 @@ data_featurecollection = geojson_featurecollection_to_bytes(geojson_featurecolle
 # ------------------------- v2 geojson to bytes --------------------------------
 data_point_v2 = geojson_point_to_bytes_v2(geojson_point, srid=4326)
 data_multipoint_v2 = geojson_multipoint_to_bytes_v2(geojson_multipoint, srid=4326)
-
+data_linestring_v2 = geojson_linestring_to_bytes_v2(geojson_linestring, srid=4326)
+data_multilinestring_v2 = geojson_multilinestring_to_bytes_v2(geojson_multilinestring, srid=4326)
 
 # -------------------------- v1 bytes to geojson -------------------------------
 out_point = bytes_to_geojson_point(data_point)
@@ -85,40 +88,61 @@ out_featurecollection = bytes_to_geojson_featurecollection(data_featurecollectio
 # -------------------------- v2 bytes to geojson -------------------------------
 out_point_v2 = bytes_to_geojson_point_v2(data_point_v2)
 out_multipoint_v2 = bytes_to_geojson_multipoint_v2(data_multipoint_v2)
+out_linestring_v2 = bytes_to_geojson_linestring_v2(data_linestring_v2)
+out_multilinestring_v2 = bytes_to_geojson_multilinestring_v2(data_multilinestring_v2)
 
+print(" ======================= POINT ============================== ")
 print("geojson point bytes length:", len(geojson_bytes_point))
 print("protobuf v1 point bytes length:", len(data_point))
 print("protobuf v2 point bytes length:", len(data_point_v2))
 print("out point v1 geojson:", json.dumps(out_point))
 print("out point v2 geojson:", json.dumps(out_point_v2))
 print("================================================")
-print("geojson polygon bytes length", len(geojson_bytes_polygon))
-print("protobuf polygon bytes length", len(data_polygon))
-print("out polygon geojson:", json.dumps(out_polygon))
-print("================================================")
-print("geojson multipolygon bytes length", len(geojson_bytes_multipolygon))
-print("protobuf multipolygon bytes length", len(data_multipolygon))
-print("out multipolygon geojson:", json.dumps(out_multipolygon))
-print("================================================")
-print("geojson linestring bytes length", len(geojson_bytes_linestring))
-print("protobuf linestring bytes length", len(data_linestring))
-print("out linestring:", json.dumps(out_linestring))
-print("================================================")
-print("geojson multilinestring bytes length", len(geojson_bytes_multilinestring))
-print("protobuf multilinestring bytes length", len(data_multilinestring))
-print("out multilinestring:", json.dumps(out_multilinestring))
-print("================================================")
+
+print(" ======================= MULTI POINT ============================== ")
 print("geojson multipoint bytes length", len(geojson_bytes_multipoint))
 print("protobuf v1 multipoint bytes length", len(data_multipoint))
 print("protobuf v2 multipoint bytes length:", len(data_multipoint_v2))
 print("out v1 multipoint:", json.dumps(out_multipoint))
 print("out v2 multipoint:", json.dumps(out_multipoint_v2))
 print("================================================")
+
+print(" ======================= LINESTRING ============================== ")
+print("geojson linestring bytes length", len(geojson_bytes_linestring))
+print("protobuf v1 linestring bytes length", len(data_linestring))
+print("protobuf v2 linestring bytes length:", len(data_linestring_v2))
+print("out v1 linestring:", json.dumps(out_linestring))
+print("out v2 linestring:", json.dumps(out_linestring_v2))
+print("================================================")
+
+print(" ======================= MULTI LINESTRING ============================== ")
+print("geojson multilinestring bytes length", len(geojson_bytes_multilinestring))
+print("protobuf v1 multilinestring bytes length", len(data_multilinestring))
+print("protobuf v2 multilinestring bytes length:", len(data_multilinestring_v2))
+print("out multilinestring:", json.dumps(out_multilinestring))
+print("out multilinestring:", json.dumps(out_multilinestring_v2))
+print("================================================")
+
+print(" ======================= POLYGON ============================== ")
+print("geojson polygon bytes length", len(geojson_bytes_polygon))
+print("protobuf polygon bytes length", len(data_polygon))
+print("out polygon geojson:", json.dumps(out_polygon))
+print("================================================")
+
+print(" ======================= MULTI POLYGON ============================== ")
+print("geojson multipolygon bytes length", len(geojson_bytes_multipolygon))
+print("protobuf multipolygon bytes length", len(data_multipolygon))
+print("out multipolygon geojson:", json.dumps(out_multipolygon))
+print("================================================")
+
+print(" ======================= FEATURE ============================== ")
+print("geojson feature bytes length", len(geojson_bytes_feature))
+print("protobuf feature bytes length", len(data_feature))
+print("out feature geojson:", json.dumps(out_feature))
+print("================================================")
+
+print(" ======================= FEATURE COLLECTION ============================== ")
 protobuf_fc_bytes = sum(len(b) for b in data_featurecollection) # because now
 print("geojson featurecollection bytes length", len(geojson_bytes_featurecollection))
 print("protobuf featurecollection bytes length", protobuf_fc_bytes)
 print("out featurecollection geojson:", json.dumps(out_featurecollection))
-print("================================================")
-print("geojson feature bytes length", len(geojson_bytes_feature))
-print("protobuf feature bytes length", len(data_feature))
-print("out feature geojson:", json.dumps(out_feature))

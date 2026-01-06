@@ -14,6 +14,6 @@ python scripts/gen_proto.py
 
 ### Run the example
 ```bash
-python examples/geojson_point_roundtrip.py
+python examples/geojson_roundtrip.py
 ```
 
