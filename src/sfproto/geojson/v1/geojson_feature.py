@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Union
-from sfproto.geojson_point import geojson_point_to_bytes, bytes_to_geojson_point
-from sfproto.geojson_polygon import (geojson_polygon_to_bytes, bytes_to_geojson_polygon,)
-from sfproto.geojson_multipolygon import (geojson_multipolygon_to_bytes, bytes_to_geojson_multipolygon,)
-from sfproto.geojson_multipoint import (geojson_multipoint_to_bytes, bytes_to_geojson_multipoint,)
-from sfproto.geojson_linestring import (geojson_linestring_to_bytes, bytes_to_geojson_linestring,)
-from sfproto.geojson_multilinestring import (geojson_multilinestring_to_bytes, bytes_to_geojson_multilinestring,)
-
-from sfproto.sf.v1 import geometry_pb2
+from typing import Any, Dict, Union
+from sfproto.geojson.v1.geojson_point import geojson_point_to_bytes, bytes_to_geojson_point
+from sfproto.geojson.v1.geojson_polygon import (geojson_polygon_to_bytes, bytes_to_geojson_polygon, )
+from sfproto.geojson.v1.geojson_multipolygon import (geojson_multipolygon_to_bytes, bytes_to_geojson_multipolygon, )
+from sfproto.geojson.v1.geojson_multipoint import (geojson_multipoint_to_bytes, bytes_to_geojson_multipoint, )
+from sfproto.geojson.v1.geojson_linestring import (geojson_linestring_to_bytes, bytes_to_geojson_linestring, )
+from sfproto.geojson.v1.geojson_multilinestring import (geojson_multilinestring_to_bytes, bytes_to_geojson_multilinestring, )
 
 GeoJSON = Dict[str, Any]
 

@@ -1,0 +1,76 @@
+syntax = "proto3";
+package sf.v2;
+
+message Crs {
+  // EPSG code (e.g., 4326). 0 = unknown/unspecified.
+  uint32 srid = 1;
+
+  // Quantization scale factor:
+  // real = int_value / scale
+  // Example EPSG:4326: scale=10000000 (1e7)
+  uint32 scale = 2;
+}
+
+message Coordinate {
+  // Quantized integer coordinate (scaled)
+  sint32 x = 1;
+  sint32 y = 2;
+}
+
+message Point {
+  Coordinate coord = 1;
+}
+
+message MultiPoint {
+  repeated Point points = 1;
+}
+
+/**
+ * Delta-encoded LineString.
+ * points[0] = start
+ * points[i] = previous + (dx[i-1], dy[i-1]) for i>=1
+ */
+message DeltaLineString {
+  Coordinate start = 1;
+
+  // Deltas from previous point (same length)
+  repeated sint32 dx = 2;
+  repeated sint32 dy = 3;
+}
+
+/**
+ * Delta-encoded ring (same idea as line).
+ * Ring closure is implicit or explicit depending on your encoder:
+ * - If you include the closing point, it will appear in deltas.
+ * - Or you can omit it and close in GeoJSON when decoding.
+ */
+message DeltaRing {
+  Coordinate start = 1;
+  repeated sint32 dx = 2;
+  repeated sint32 dy = 3;
+}
+
+message Polygon {
+  repeated DeltaRing rings = 1;   // [outer, hole1, hole2, ...]
+}
+
+message MultiLineString {
+  repeated DeltaLineString line_strings = 1;
+}
+
+message MultiPolygon {
+  repeated Polygon polygons = 1;
+}
+
+message Geometry {
+  Crs crs = 1;
+
+  oneof geom {
+    Point point = 10;
+    DeltaLineString line_string = 11;
+    Polygon polygon = 12;
+    MultiPolygon multipolygon = 13;
+    MultiLineString multilinestring = 14;
+    MultiPoint multipoint = 15;
+  }
+}
