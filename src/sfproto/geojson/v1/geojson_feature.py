@@ -72,6 +72,7 @@ def bytes_to_geojson_feature(data: bytes) -> GeoJSON:
         bytes_to_geojson_multipolygon,
         bytes_to_geojson_linestring,
         bytes_to_geojson_multilinestring,
+        bytes_to_geojson_geometrycollection,
     ):
         try:
             geometry = decoder(data)
