@@ -102,10 +102,12 @@ def to_binary_v2():
 data_point_v2,data_multipoint_v2,data_linestring_v2,data_multilinestring_v2,data_polygon_v2,data_multipolygon_v2,data_geometrycollection_v2,data_feature_v2,data_featurecollection_v2 = to_binary_v2()
 
 # ------------------------- v4 geojson to bytes --------------------------------
+data_point_v4 = geojson_to_bytes_v4(geojson_point, srid=4326)
 data_feature_v4 = geojson_to_bytes_v4(geojson_feature, srid=4326)
 data_featurecollection_v4 = geojson_to_bytes_v4(geojson_featurecollection, srid=4326)
 
 # ------------------------- v5 geojson to bytes --------------------------------
+data_point_v5 = geojson_to_bytes_v5(geojson_point, srid=4326)
 data_feature_v5 = geojson_to_bytes_v5(geojson_feature, srid=4326)
 data_featurecollection_v5 = geojson_to_bytes_v5(geojson_featurecollection, srid=4326)
 
@@ -143,10 +145,12 @@ def out_geom2():
 out_point_v2, out_multipoint_v2,out_linestring_v2, out_multilinestring_v2, out_polygon_v2, out_multipolygon_v2, out_geometrycollection_v2, out_feature_v2, out_featurecollection_v2 = out_geom2()
 
 # -------------------------- v4 bytes to geojson -------------------------------
+out_point_v4 = bytes_to_geojson_v4(data_point_v4)
 out_feature_v4 = bytes_to_geojson_v4(data_feature_v4)
 out_featurecollection_v4 = bytes_to_geojson_v4(data_featurecollection_v4)
 
 # -------------------------- v5 bytes to geojson -------------------------------
+out_point_v5 = bytes_to_geojson_v4(data_point_v5)
 out_feature_v5 = bytes_to_geojson_v5(data_feature_v5)
 out_featurecollection_v5 = bytes_to_geojson_v5(data_featurecollection_v5)
 
@@ -184,10 +188,12 @@ def fair_length2():
 geojson_bytes_point_fair_v2,geojson_bytes_multipoint_fair_v2,geojson_bytes_linestring_fair_v2,geojson_bytes_multilinestring_fair_v2,geojson_bytes_polygon_fair_v2,geojson_bytes_multipolygon_fair_v2,geojson_bytes_geometrycollection_fair_v2,geojson_bytes_feature_fair_v2,geojson_bytes_featurecollection_fair_v2 = fair_length2()
 
 # GeoJSON → bytes fair  v4 comparison (compact, no whitespace)
+geojson_bytes_point_fair_v4 = json.dumps(out_point_v4, separators=(",", ":")).encode("utf-8")
 geojson_bytes_feature_fair_v4 = json.dumps(out_feature_v4, separators=(",", ":")).encode("utf-8")
 geojson_bytes_featurecollection_fair_v4 = json.dumps(out_featurecollection_v4, separators=(",", ":")).encode("utf-8")
 
 # GeoJSON → bytes fair  v5 comparison (compact, no whitespace)
+geojson_bytes_point_fair_v5 = json.dumps(out_point_v5, separators=(",", ":")).encode("utf-8")
 geojson_bytes_feature_fair_v5 = json.dumps(out_feature_v5, separators=(",", ":")).encode("utf-8")
 geojson_bytes_featurecollection_fair_v5 = json.dumps(out_featurecollection_v5, separators=(",", ":")).encode("utf-8")
 
@@ -199,8 +205,12 @@ def printing():
     print("geojson point bytes length:", len(geojson_bytes_point))
     print("protobuf v1 point bytes length:", len(data_point), "vs fair geojson bytes length:", len(geojson_bytes_point_fair))
     print("protobuf v2 point bytes length:", len(data_point_v2), "vs fair geojson bytes length:", len(geojson_bytes_point_fair_v2))
+    print("protobuf v4 point bytes length:", len(data_point_v4), "vs fair geojson bytes length:", len(geojson_bytes_point_fair_v4))
+    print("protobuf v5 point bytes length:", len(data_point_v5), "vs fair geojson bytes length:", len(geojson_bytes_point_fair_v5))
     print("out point v1 geojson:", json.dumps(out_point))
     print("out point v2 geojson:", json.dumps(out_point_v2))
+    print("out point v4 geojson:", json.dumps(out_point_v4))
+    print("out point v5 geojson:", json.dumps(out_point_v4))
     print("================================================")
 
     print(" ======================= MULTI POINT ============================== ")
@@ -271,9 +281,9 @@ def printing():
     print("protobuf v2 featurecollection bytes length", len(data_featurecollection_v2), "vs fair geojson bytes length:", len(geojson_bytes_featurecollection_fair_v2))
     print("protobuf v4 featurecollection bytes length", len(data_featurecollection_v4), "vs fair geojson bytes length:", len(geojson_bytes_featurecollection_fair_v4))
     print("protobuf v5 featurecollection bytes length", len(data_featurecollection_v5), "vs fair geojson bytes length:", len(geojson_bytes_featurecollection_fair_v5))
-    print("out v1 featurecollection geojson:", json.dumps(out_featurecollection))
-    print("out v2 featurecollection geojson:", json.dumps(out_featurecollection_v2))
-    print("out v4 featurecollection geojson:", json.dumps(out_featurecollection_v4))
-    print("out v5 featurecollection geojson:", json.dumps(out_featurecollection_v5))
+    # print("out v1 featurecollection geojson:", json.dumps(out_featurecollection))
+    # print("out v2 featurecollection geojson:", json.dumps(out_featurecollection_v2))
+    # print("out v4 featurecollection geojson:", json.dumps(out_featurecollection_v4))
+    # print("out v5 featurecollection geojson:", json.dumps(out_featurecollection_v5))
 
 printing()
