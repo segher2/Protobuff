@@ -72,6 +72,9 @@ message Geometry {
 message Feature {
   Geometry geometry = 1;
   google.protobuf.Struct properties = 2; // GeoJSON Feature.properties
+      string id = 3;
+    repeated double bbox = 4;
+    google.protobuf.Struct extra = 5;
 }
 
 /** Optional (nice, but not required): FeatureCollection message */
