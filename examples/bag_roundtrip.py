@@ -326,7 +326,7 @@ def bytes_to_geojson_bag_pand_featurecollection(data: bytes) -> GeoJSON:
 
 if __name__ == "__main__":
     # Load BAG pand FeatureCollection GeoJSON
-    geojson_pand_fc = load_geojson("data/bag_pand_count_10.geojson")
+    geojson_pand_fc = load_geojson("data/bag_pand_50k.geojson")
 
     # GeoJSON → bytes (compact, no whitespace)
     geojson_bytes_fc = json.dumps(geojson_pand_fc, separators=(",", ":")).encode("utf-8")

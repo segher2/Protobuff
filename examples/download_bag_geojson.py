@@ -30,6 +30,6 @@ def download_bag_pand_geojson(count: int, output_dir: str = "."):
 
 if __name__ == "__main__":
     # the number of building features to download
-    COUNT = 10000
+    COUNT = 1000000
 
-    download_bag_pand_geojson(COUNT, output_dir="examples/data")
+    download_bag_pand_geojson(COUNT, output_dir="data")
