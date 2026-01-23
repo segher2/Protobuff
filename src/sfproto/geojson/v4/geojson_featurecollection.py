@@ -1,85 +1,155 @@
 from __future__ import annotations
 
 import json
-import struct
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Optional, Union
 
+from google.protobuf.struct_pb2 import Struct
+from google.protobuf.json_format import MessageToDict
+
+from sfproto.sf.v4 import geometry_pb2
 from sfproto.geojson.v4.geojson_feature import (
     geojson_feature_to_bytes_v4,
     bytes_to_geojson_feature_v4,
 )
 
 GeoJSON = Dict[str, Any]
+GeoJSONInput = Union[GeoJSON, str]
+
+# These are the standard-ish keys we treat specially at FeatureCollection level
+_RESERVED_FCOL = {"type", "features", "bbox", "name", "crs"}
 
 
-def _pack_chunks(chunks: List[bytes]) -> bytes:
-    # u32 count, then repeated (u32 len, bytes)
-    out = bytearray()
-    out += struct.pack(">I", len(chunks))
-    for c in chunks:
-        out += struct.pack(">I", len(c))
-        out += c
-    return bytes(out)
+def _loads_if_needed(obj_or_json: GeoJSONInput) -> GeoJSON:
+    return json.loads(obj_or_json) if isinstance(obj_or_json, str) else obj_or_json
 
 
-def _unpack_chunks(payload: bytes) -> List[bytes]:
-    mv = memoryview(payload)
-    if len(mv) < 4:
-        raise ValueError("Invalid FeatureCollection bytes: too short")
-
-    (n,) = struct.unpack(">I", mv[:4])
-    offset = 4
-    chunks: List[bytes] = []
-
-    for _ in range(n):
-        if offset + 4 > len(mv):
-            raise ValueError("Invalid FeatureCollection bytes: truncated length")
-        (ln,) = struct.unpack(">I", mv[offset : offset + 4])
-        offset += 4
-
-        if offset + ln > len(mv):
-            raise ValueError("Invalid FeatureCollection bytes: truncated feature payload")
-        chunks.append(bytes(mv[offset : offset + ln]))
-        offset += ln
-
-    if offset != len(mv):
-        raise ValueError("Invalid FeatureCollection bytes: trailing bytes")
-
-    return chunks
+def _dict_to_struct(d: Optional[Dict[str, Any]]) -> Struct:
+    s = Struct()
+    if d is None:
+        return s
+    s.update(d)
+    return s
 
 
-def geojson_featurecollection_to_bytes_v4(
-    obj_or_json: Union[GeoJSON, str], srid: int = 0
-) -> bytes:
+def _struct_to_dict(s: Struct) -> Dict[str, Any]:
+    return MessageToDict(s)
+
+
+def _extract_extra_fcol(obj: GeoJSON) -> Dict[str, Any]:
+    return {k: v for k, v in obj.items() if k not in _RESERVED_FCOL}
+
+
+def _geojson_crs_obj_to_srid(crs_obj: Any) -> int:
     """
-    Convert GeoJSON FeatureCollection -> bytes.
-    Each Feature is encoded as sf.v4.Feature bytes (with properties).
-    The collection is stored as a length-prefixed list of features.
+    Accepts old-style GeoJSON CRS object:
+      {"type":"name","properties":{"name":"urn:ogc:def:crs:EPSG::28992"}}
+    Returns EPSG code int if parsable, else 0.
     """
-    obj = json.loads(obj_or_json) if isinstance(obj_or_json, str) else obj_or_json
+    if not isinstance(crs_obj, dict):
+        return 0
+    props = crs_obj.get("properties")
+    if not isinstance(props, dict):
+        return 0
+    name = props.get("name")
+    if not isinstance(name, str):
+        return 0
+    if "EPSG" not in name:
+        return 0
+    try:
+        return int(name.split(":")[-1])
+    except ValueError:
+        return 0
+
+
+def _srid_to_geojson_crs_obj(srid: int) -> GeoJSON:
+    return {
+        "type": "name",
+        "properties": {"name": f"urn:ogc:def:crs:EPSG::{int(srid)}"},
+    }
+
+
+def geojson_featurecollection_to_bytes_v4(obj_or_json: GeoJSONInput, srid: int = 0) -> bytes:
+    """
+    Convert GeoJSON FeatureCollection -> sf.v4.FeatureCollection bytes.
+
+    Encodes:
+      - features (each as sf.v4.Feature)
+      - bbox (optional)
+      - name (optional)
+      - crs (optional, stored as srid)
+      - extra (any other top-level keys)
+    """
+    obj = _loads_if_needed(obj_or_json)
 
     if obj.get("type") != "FeatureCollection":
-        raise ValueError(
-            f"Expected GeoJSON type=FeatureCollection, got: {obj.get('type')!r}"
-        )
+        raise ValueError(f"Expected GeoJSON type=FeatureCollection, got: {obj.get('type')!r}")
 
     feats = obj.get("features")
     if not isinstance(feats, list):
         raise ValueError("FeatureCollection.features must be a list")
 
-    feature_chunks = [geojson_feature_to_bytes_v4(f, srid=srid) for f in feats]
-    return _pack_chunks(feature_chunks)
+    fc = geometry_pb2.FeatureCollection()
+
+    # --- features ---
+    for f in feats:
+        feat_bytes = geojson_feature_to_bytes_v4(f, srid=srid)
+        fc.features.append(geometry_pb2.Feature.FromString(feat_bytes))
+
+    # --- bbox (optional) ---
+    bbox = obj.get("bbox")
+    if isinstance(bbox, list) and len(bbox) in (4, 6) and all(isinstance(x, (int, float)) for x in bbox):
+        fc.bbox.extend([float(x) for x in bbox])
+
+    # --- name (optional) ---
+    name = obj.get("name")
+    if isinstance(name, str) and name:
+        fc.name = name
+
+    # --- crs (optional) ---
+    crs_obj = obj.get("crs")
+    srid_from_geojson = _geojson_crs_obj_to_srid(crs_obj)
+    if srid_from_geojson:
+        fc.crs.srid = int(srid_from_geojson)
+    elif srid:
+        # If input GeoJSON has no CRS member, you can still store the srid you used.
+        fc.crs.srid = int(srid)
+
+    # --- extra (optional) ---
+    extra = _extract_extra_fcol(obj)
+    if extra:
+        fc.extra.CopyFrom(_dict_to_struct(extra))
+
+    return fc.SerializeToString()
 
 
 def bytes_to_geojson_featurecollection_v4(data: bytes) -> GeoJSON:
     """
-    Convert bytes -> GeoJSON FeatureCollection.
-    Expects the length-prefixed list written by geojson_featurecollection_to_bytes_v4().
+    Convert sf.v4.FeatureCollection bytes -> GeoJSON FeatureCollection.
     """
-    chunks = _unpack_chunks(data)
-    features = [bytes_to_geojson_feature_v4(c) for c in chunks]
+    fc = geometry_pb2.FeatureCollection.FromString(data)
 
-    return {
+    out: GeoJSON = {
         "type": "FeatureCollection",
-        "features": features,
+        "features": [bytes_to_geojson_feature_v4(f.SerializeToString()) for f in fc.features],
     }
+
+    # bbox
+    if getattr(fc, "bbox", None) and len(fc.bbox) in (4, 6):
+        out["bbox"] = list(fc.bbox)
+
+    # name
+    if getattr(fc, "name", ""):
+        out["name"] = fc.name
+
+    # crs (reconstruct old-style member if srid present)
+    if fc.HasField("crs") and fc.crs.srid:
+        out["crs"] = _srid_to_geojson_crs_obj(fc.crs.srid)
+
+    # extra (merge without overwriting reserved keys)
+    if hasattr(fc, "extra"):
+        extra_dict = _struct_to_dict(fc.extra)
+        for k, v in extra_dict.items():
+            if k not in out:
+                out[k] = v
+
+    return out

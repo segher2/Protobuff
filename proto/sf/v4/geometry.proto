@@ -56,7 +56,20 @@ message Feature {
   google.protobuf.Struct extra = 5;
 }
 
-/** Optional: FeatureCollection */
+
 message FeatureCollection {
+  // GeoJSON FeatureCollection.features
   repeated Feature features = 1;
+
+  // GeoJSON FeatureCollection.bbox (optional)
+  repeated double bbox = 2;
+
+  // Any other top-level keys outside {type, features, bbox, name, crs}
+  google.protobuf.Struct extra = 3;
+
+  // GeoJSON FeatureCollection.name (optional)
+  string name = 4;
+
+  // Collection CRS (optional)
+  Crs crs = 5;
 }
