@@ -147,7 +147,7 @@ def geojson_multipolygon_to_bytes_v2(obj_or_json: Union[GeoJSON, str], srid: int
     else:
         obj = obj_or_json
 
-    msg = geojson_multipolygon_to_pb(obj, srid=srid)
+    msg = geojson_multipolygon_to_pb(obj, srid=srid, scale=scale)
     return msg.SerializeToString()
 
 

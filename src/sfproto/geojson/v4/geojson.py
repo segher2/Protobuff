@@ -14,6 +14,7 @@ from sfproto.geojson.v1.geojson_multipolygon import geojson_multipolygon_to_byte
 
 # v4 Feature codec (WITH properties)
 from sfproto.geojson.v4.geojson_feature import geojson_feature_to_bytes_v4, bytes_to_geojson_feature_v4
+from sfproto.geojson.v4.geojson_featurecollection import geojson_featurecollection_to_bytes_v4, bytes_to_geojson_featurecollection_v4
 
 GeoJSON = Dict[str, Any]
 GeoJSONInput = Union[GeoJSON, str]
@@ -139,12 +140,8 @@ def geojson_to_bytes_v4(obj_or_json: GeoJSONInput, srid: int = 0) -> bytes:
 
     # FeatureCollection: list of v4 Features
     if t == "FeatureCollection":
-        feats = obj.get("features")
-        if not isinstance(feats, list):
-            raise ValueError("FeatureCollection.features must be a list")
-
-        feat_bytes = [geojson_feature_to_bytes_v4(f, srid=srid) for f in feats]
-        return _wrap(_TAG_FCOL, _pack_chunks(feat_bytes))
+        payload = geojson_featurecollection_to_bytes_v4(obj, srid=srid)
+        return _wrap(_TAG_FCOL, _pack_chunks([payload]))
 
     # GeometryCollection: list of geometries (no properties here)
     if t == "GeometryCollection":
@@ -183,7 +180,8 @@ def bytes_to_geojson_v4(data: bytes) -> GeoJSON:
         return bytes_to_geojson_feature_v4(chunks[0])
 
     if tag == _TAG_FCOL:
-        features = [bytes_to_geojson_feature_v4(c) for c in chunks]
-        return {"type": "FeatureCollection", "features": features}
+        if len(chunks) != 1:
+            raise ValueError("Invalid FCOL payload: expected 1 chunk")
+        return bytes_to_geojson_featurecollection_v4(chunks[0])
 
     raise ValueError(f"Unknown envelope tag: {tag!r}")

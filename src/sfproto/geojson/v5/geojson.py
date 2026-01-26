@@ -12,11 +12,12 @@ from sfproto.geojson.v2.geojson_polygon import geojson_polygon_to_bytes_v2, byte
 from sfproto.geojson.v2.geojson_multipolygon import geojson_multipolygon_to_bytes_v2, bytes_to_geojson_multipolygon_v2
 
 from sfproto.geojson.v5.geojson_feature import geojson_feature_to_bytes_v5, bytes_to_geojson_feature_v5
+from sfproto.geojson.v5.geojson_featurecollection import geojson_featurecollection_to_bytes_v5, bytes_to_geojson_featurecollection_v5
 
 GeoJSON = Dict[str, Any]
 GeoJSONInput = Union[GeoJSON, str]
 
-DEFAULT_SCALE = 10_000_000  # 1e7 -> ~cm accuracy in EPSG:4326
+DEFAULT_SCALE = 10000000  # 1e7 -> ~cm accuracy in EPSG:4326
 
 _TAG_LEN = 4
 _TAG_GEOM = b"GEOM"
@@ -138,12 +139,8 @@ def geojson_to_bytes_v5(obj_or_json: GeoJSONInput, srid: int = 0, scale: int = D
 
     # FeatureCollection: list of v5 Feature payloads
     if t == "FeatureCollection":
-        feats = obj.get("features")
-        if not isinstance(feats, list):
-            raise ValueError("FeatureCollection.features must be a list")
-
-        feat_bytes = [geojson_feature_to_bytes_v5(f, srid=srid, scale=scale) for f in feats]
-        return _wrap(_TAG_FCOL, _pack_chunks(feat_bytes))
+        payload = geojson_featurecollection_to_bytes_v5(obj, srid=srid, scale=scale)
+        return _wrap(_TAG_FCOL, _pack_chunks([payload]))
 
     # GeometryCollection: list of Geometry payloads (still no properties here)
     if t == "GeometryCollection":
@@ -181,7 +178,8 @@ def bytes_to_geojson_v5(data: bytes) -> GeoJSON:
         return bytes_to_geojson_feature_v5(chunks[0])
 
     if tag == _TAG_FCOL:
-        features = [bytes_to_geojson_feature_v5(c) for c in chunks]
-        return {"type": "FeatureCollection", "features": features}
+        if len(chunks) != 1:
+            raise ValueError("Invalid FCOL payload: expected 1 chunk")
+        return bytes_to_geojson_featurecollection_v5(chunks[0])
 
     raise ValueError(f"Unknown envelope tag: {tag!r}")
