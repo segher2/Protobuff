@@ -11,11 +11,6 @@ message CoordinateQ {
   sint32 y = 2;
 }
 
-message DeltaXY {
-  sint32 dx = 1;
-  sint32 dy = 2;
-}
-
 enum GeomType {
   GEOM_UNSPECIFIED = 0;
   POINT = 1;
@@ -27,30 +22,39 @@ enum GeomType {
 }
 
 /**
- * Stream geometry:
- * - No per-geometry absolute start stored.
- * - Decoder uses a running cursor (x,y).
- * - First delta moves from cursor to first vertex; then vertex-to-vertex.
+ * Stream geometry with packed deltas.
  *
- * For reconstructing nesting:
- * - part_sizes is used for LineString (1 entry), MultiLineString (per line),
- *   Polygon (per ring), MultiPoint (optional but included as [n]).
- * - poly_ring_counts is used only for MultiPolygon (rings per polygon),
- *   and part_sizes holds the ring sizes in polygon order.
+ * dxy is packed sint32:
+ *   [dx0, dy0, dx1, dy1, ...]
+ *
+ * IMPORTANT encoding rule:
+ * - Each geometry is encoded relative to (cursor = global_start) at the start.
+ *   That avoids huge inter-geometry jumps.
+ *
+ * Nesting reconstruction:
+ * - part_sizes:
+ *     LineString: [n]
+ *     MultiLineString: [n_line1, n_line2, ...]
+ *     Polygon: [n_ring1, n_ring2, ...]
+ *     MultiPoint: [n] (optional, but keep it if you like)
+ * - poly_ring_counts:
+ *     MultiPolygon: [rings_in_poly1, rings_in_poly2, ...]
+ *     and part_sizes holds ring sizes in polygon order.
  */
 message StreamGeometry {
   GeomType type = 1;
-  uint32 n_points = 2;
-  repeated DeltaXY d = 3;
 
-  repeated uint32 part_sizes = 4;
-  repeated uint32 poly_ring_counts = 5;
+  // packed: [dx0, dy0, dx1, dy1, ...]
+  repeated sint32 dxy = 2;
+
+  repeated uint32 part_sizes = 3;
+  repeated uint32 poly_ring_counts = 4;
 }
 
 message FeatureCollectionStream {
   Crs crs = 1;
   CoordinateQ global_start = 2;
-  repeated StreamGeometry geometries = 3; // one per Feature.geometry (properties ignored in v6)
+  repeated StreamGeometry geometries = 3;
 }
 
 message GeometryCollectionStream {

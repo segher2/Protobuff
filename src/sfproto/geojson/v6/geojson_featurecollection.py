@@ -100,40 +100,42 @@ def _flatten_geometry(geom: GeoJSON) -> Tuple[int, List[Tuple[float, float]], Li
     raise ValueError(f"Unsupported geometry type: {t!r}")
 
 
-def _encode_stream_geometry(geom: GeoJSON, cursor_xy: Tuple[int, int], scale: int) -> Tuple[geometry_pb2.StreamGeometry, Tuple[int, int]]:
+def _encode_stream_geometry(geom: GeoJSON, global_start_xy: Tuple[int, int], scale: int) -> geometry_pb2.StreamGeometry:
     gtype, flat_pts, part_sizes, poly_ring_counts = _flatten_geometry(geom)
 
-    cursor_x, cursor_y = cursor_xy
+    cursor_x, cursor_y = global_start_xy
+
     pb = geometry_pb2.StreamGeometry()
     pb.type = int(gtype)
-    pb.n_points = len(flat_pts)
 
     if part_sizes:
         pb.part_sizes.extend([int(x) for x in part_sizes])
     if poly_ring_counts:
         pb.poly_ring_counts.extend([int(x) for x in poly_ring_counts])
 
-    # stream deltas across ALL points
+    # packed dxy: [dx0, dy0, dx1, dy1, ...]
     for (x, y) in flat_pts:
         qx, qy = _q(x, scale), _q(y, scale)
-        d = pb.d.add()
-        d.dx = int(qx - cursor_x)
-        d.dy = int(qy - cursor_y)
+        dx = int(qx - cursor_x)
+        dy = int(qy - cursor_y)
+        pb.dxy.append(dx)
+        pb.dxy.append(dy)
         cursor_x, cursor_y = qx, qy
 
-    return pb, (cursor_x, cursor_y)
+    return pb
 
 
-def _decode_stream_geometry(pb: geometry_pb2.StreamGeometry, cursor_xy: Tuple[int, int], scale: int) -> Tuple[GeoJSON, Tuple[int, int]]:
-    cursor_x, cursor_y = cursor_xy
+def _decode_stream_geometry(pb: geometry_pb2.StreamGeometry, global_start_xy: Tuple[int, int], scale: int) -> GeoJSON:
+    cursor_x, cursor_y = global_start_xy
     qpts: List[Tuple[int, int]] = []
 
-    if pb.n_points != len(pb.d):
-        raise ValueError("Invalid StreamGeometry: n_points != len(d)")
+    dxy = list(pb.dxy)
+    if len(dxy) % 2 != 0:
+        raise ValueError("Invalid StreamGeometry: dxy length must be even")
 
-    for d in pb.d:
-        cursor_x += int(d.dx)
-        cursor_y += int(d.dy)
+    for i in range(0, len(dxy), 2):
+        cursor_x += int(dxy[i])
+        cursor_y += int(dxy[i + 1])
         qpts.append((cursor_x, cursor_y))
 
     pts = [(_uq(x, scale), _uq(y, scale)) for (x, y) in qpts]
@@ -142,16 +144,16 @@ def _decode_stream_geometry(pb: geometry_pb2.StreamGeometry, cursor_xy: Tuple[in
     part_sizes = list(pb.part_sizes)
     poly_ring_counts = list(pb.poly_ring_counts)
 
-    # rebuild nesting
+    # rebuild nesting (zelfde als jouw code, maar nu op pts)
     if t == geometry_pb2.POINT:
         x, y = pts[0]
-        return {"type": "Point", "coordinates": [x, y]}, (cursor_x, cursor_y)
+        return {"type": "Point", "coordinates": [x, y]}
 
     if t == geometry_pb2.MULTIPOINT:
-        return {"type": "MultiPoint", "coordinates": [[x, y] for (x, y) in pts]}, (cursor_x, cursor_y)
+        return {"type": "MultiPoint", "coordinates": [[x, y] for (x, y) in pts]}
 
     if t == geometry_pb2.LINESTRING:
-        return {"type": "LineString", "coordinates": [[x, y] for (x, y) in pts]}, (cursor_x, cursor_y)
+        return {"type": "LineString", "coordinates": [[x, y] for (x, y) in pts]}
 
     if t == geometry_pb2.MULTILINESTRING:
         out_lines = []
@@ -160,7 +162,7 @@ def _decode_stream_geometry(pb: geometry_pb2.StreamGeometry, cursor_xy: Tuple[in
             seg = pts[idx: idx + n]
             out_lines.append([[x, y] for (x, y) in seg])
             idx += n
-        return {"type": "MultiLineString", "coordinates": out_lines}, (cursor_x, cursor_y)
+        return {"type": "MultiLineString", "coordinates": out_lines}
 
     if t == geometry_pb2.POLYGON:
         out_rings = []
@@ -169,11 +171,10 @@ def _decode_stream_geometry(pb: geometry_pb2.StreamGeometry, cursor_xy: Tuple[in
             ring = pts[idx: idx + n]
             idx += n
             ring_coords = [[x, y] for (x, y) in ring]
-            # close ring for GeoJSON
             if ring_coords:
                 ring_coords.append(ring_coords[0])
             out_rings.append(ring_coords)
-        return {"type": "Polygon", "coordinates": out_rings}, (cursor_x, cursor_y)
+        return {"type": "Polygon", "coordinates": out_rings}
 
     if t == geometry_pb2.MULTIPOLYGON:
         out_polys = []
@@ -191,7 +192,7 @@ def _decode_stream_geometry(pb: geometry_pb2.StreamGeometry, cursor_xy: Tuple[in
                     ring_coords.append(ring_coords[0])
                 poly.append(ring_coords)
             out_polys.append(poly)
-        return {"type": "MultiPolygon", "coordinates": out_polys}, (cursor_x, cursor_y)
+        return {"type": "MultiPolygon", "coordinates": out_polys}
 
     raise ValueError(f"Unsupported StreamGeometry type enum: {t}")
 
@@ -220,13 +221,13 @@ def geojson_featurecollection_to_bytes_v6(obj_or_json: GeoJSONInput, srid: int, 
     fc.global_start.x = _q(x0, scale)
     fc.global_start.y = _q(y0, scale)
 
-    cursor = (fc.global_start.x, fc.global_start.y)
+    global_start_xy = (int(fc.global_start.x), int(fc.global_start.y))
 
     for feat in feats:
         geom = feat.get("geometry")
         if not isinstance(geom, dict):
             raise ValueError("Feature.geometry must be an object")
-        pb_geom, cursor = _encode_stream_geometry(geom, cursor, scale)
+        pb_geom = _encode_stream_geometry(geom, global_start_xy, scale)
         fc.geometries.append(pb_geom)
 
     return fc.SerializeToString()
@@ -234,17 +235,14 @@ def geojson_featurecollection_to_bytes_v6(obj_or_json: GeoJSONInput, srid: int, 
 
 def bytes_to_geojson_featurecollection_v6(data: bytes) -> GeoJSON:
     fc = geometry_pb2.FeatureCollectionStream.FromString(data)
-    srid = int(fc.crs.srid)
     scale = int(fc.crs.scale)
 
-    cursor = (int(fc.global_start.x), int(fc.global_start.y))
+    global_start_xy = (int(fc.global_start.x), int(fc.global_start.y))
 
     features: List[GeoJSON] = []
     for pb_geom in fc.geometries:
-        geom, cursor = _decode_stream_geometry(pb_geom, cursor, scale)
+        geom = _decode_stream_geometry(pb_geom, global_start_xy, scale)
         features.append({"type": "Feature", "geometry": geom, "properties": None})
 
-    out: GeoJSON = {"type": "FeatureCollection", "features": features}
-    # (optional) restore CRS object if you want:
-    # out["crs"] = {"type": "name", "properties": {"name": f"urn:ogc:def:crs:EPSG::{srid}"}}
-    return out
+    return {"type": "FeatureCollection", "features": features}
+

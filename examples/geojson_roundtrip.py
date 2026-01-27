@@ -36,7 +36,7 @@ geojson_multipolygon = load_geojson('data/MultiPolygon.geojson')
 geojson_geometrycollection = load_geojson('data/GeometryCollection.geojson')
 geojson_feature = load_geojson('data/Feature.geojson')
 geojson_featurecollection = load_geojson('data/FeatureCollection.geojson')
-geojson_BAG = load_geojson('data/bag_pand_count_10.geojson')
+geojson_BAG = load_geojson('data/bag_pand_count_10000.geojson')
 
 
 _geojson_input = geojson_BAG
@@ -106,7 +106,7 @@ _default_scaler = get_scaler(_srid)
 print(f'default scaler: {_default_scaler}')
 
 # ================================ ROUND TRIP ======================================
-def roundtrip(input_geojson, version):
+def roundtrip(input_geojson, version, print_):
     data_length = json.dumps(input_geojson, separators=(",", ":")).encode("utf-8")
     print(f'data length: = {len(data_length)}')
     if version == 1:
@@ -129,9 +129,10 @@ def roundtrip(input_geojson, version):
         return
     geojson_bytes_fair = json.dumps(to_geojson, separators=(",", ":")).encode("utf-8")
     print(f'protobuf v{version} bytes length: {len(binary_representation)} vs fair geojson byte length: {len(geojson_bytes_fair)}')
-    print(f'output geojson after roundtrip: {to_geojson}')
+    if print_:
+        print(f'output geojson after roundtrip: {to_geojson}')
 
-roundtrip(_geojson_input, 4)
-roundtrip(_geojson_input, _version)
-roundtrip(_geojson_input, 2)
-roundtrip(_geojson_input, 6)
+roundtrip(_geojson_input, 4, False)
+roundtrip(_geojson_input, _version, False)
+roundtrip(_geojson_input, 2, False)
+roundtrip(_geojson_input, 6, False)
