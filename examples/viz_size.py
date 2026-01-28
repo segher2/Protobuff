@@ -10,10 +10,10 @@ CSV_PATH = Path("bench_out/size/size_summary.csv")
 OUT_DIR = Path("bench_out/size/figures_telling")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-FORMATS = ["v4", "v5", "fgb"]
+FORMATS = ["v4", "v7", "fgb"]
 LABELS = {
     "v4": "sfproto v4",
-    "v5": "sfproto v5",
+    "v7": "sfproto v7",
     "fgb": "FlatGeobuf",
 }
 

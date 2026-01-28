@@ -6,7 +6,7 @@ from typing import Dict, Any
 
 # sfproto
 from sfproto.geojson.v4.geojson import geojson_to_bytes_v4
-from sfproto.geojson.v5.geojson import geojson_to_bytes_v5
+from sfproto.geojson.v7.geojson import geojson_to_bytes_v7
 
 GeoJSON = Dict[str, Any]
 
@@ -15,7 +15,7 @@ GeoJSON = Dict[str, Any]
 # =========================
 
 DATA_DIR = Path("examples/data/benchmarks")
-FGB_DIR = Path("examples/data/benchmarks_fgb")
+FGB_DIR = Path("examples/data/benchmarks_fgb_no_index")
 OUT_DIR = Path("bench_out/size")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -54,7 +54,7 @@ for geojson_path in sorted(DATA_DIR.glob("*.geojson")):
 
     # ---- sfproto v5 ----
     size_v5 = len(
-        geojson_to_bytes_v5(
+        geojson_to_bytes_v7(
             geojson_obj,
             srid=SRID,
             scale=SCALE_V5,
@@ -67,7 +67,7 @@ for geojson_path in sorted(DATA_DIR.glob("*.geojson")):
     print(name)
     print(f"  GeoJSON: {size_gj:>12,} bytes")
     print(f"  v4:      {size_v4:>12,} bytes  ({size_gj/size_v4:6.2f}× smaller)")
-    print(f"  v5:      {size_v5:>12,} bytes  ({size_gj/size_v5:6.2f}× smaller)")
+    print(f"  v7:      {size_v5:>12,} bytes  ({size_gj/size_v5:6.2f}× smaller)")
     print(f"  FGB:     {size_fgb:>12,} bytes  ({size_gj/size_fgb:6.2f}× smaller)")
     print()
 
@@ -84,7 +84,7 @@ for geojson_path in sorted(DATA_DIR.glob("*.geojson")):
 # Optional CSV
 summary = OUT_DIR / "size_summary.csv"
 with summary.open("w", encoding="utf-8") as f:
-    f.write("dataset,geojson,v4,v5,fgb\n")
+    f.write("dataset,geojson,v4,v7,fgb\n")
     for r in results:
         f.write(f"{r['dataset']},{r['geojson']},{r['v4']},{r['v5']},{r['fgb']}\n")
 
