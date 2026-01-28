@@ -24,25 +24,23 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14sf/v6/geometry.proto\x12\x05sf.v6\"\"\n\x03\x43rs\x12\x0c\n\x04srid\x18\x01 \x01(\r\x12\r\n\x05scale\x18\x02 \x01(\r\"#\n\x0b\x43oordinateQ\x12\t\n\x01x\x18\x01 \x01(\x11\x12\t\n\x01y\x18\x02 \x01(\x11\"!\n\x07\x44\x65ltaXY\x12\n\n\x02\x64x\x18\x01 \x01(\x11\x12\n\n\x02\x64y\x18\x02 \x01(\x11\"\x8a\x01\n\x0eStreamGeometry\x12\x1d\n\x04type\x18\x01 \x01(\x0e\x32\x0f.sf.v6.GeomType\x12\x10\n\x08n_points\x18\x02 \x01(\r\x12\x19\n\x01\x64\x18\x03 \x03(\x0b\x32\x0e.sf.v6.DeltaXY\x12\x12\n\npart_sizes\x18\x04 \x03(\r\x12\x18\n\x10poly_ring_counts\x18\x05 \x03(\r\"\x87\x01\n\x17\x46\x65\x61tureCollectionStream\x12\x17\n\x03\x63rs\x18\x01 \x01(\x0b\x32\n.sf.v6.Crs\x12(\n\x0cglobal_start\x18\x02 \x01(\x0b\x32\x12.sf.v6.CoordinateQ\x12)\n\ngeometries\x18\x03 \x03(\x0b\x32\x15.sf.v6.StreamGeometry\"\x88\x01\n\x18GeometryCollectionStream\x12\x17\n\x03\x63rs\x18\x01 \x01(\x0b\x32\n.sf.v6.Crs\x12(\n\x0cglobal_start\x18\x02 \x01(\x0b\x32\x12.sf.v6.CoordinateQ\x12)\n\ngeometries\x18\x03 \x03(\x0b\x32\x15.sf.v6.StreamGeometry*\x7f\n\x08GeomType\x12\x14\n\x10GEOM_UNSPECIFIED\x10\x00\x12\t\n\x05POINT\x10\x01\x12\x0e\n\nMULTIPOINT\x10\x02\x12\x0e\n\nLINESTRING\x10\x03\x12\x13\n\x0fMULTILINESTRING\x10\x04\x12\x0b\n\x07POLYGON\x10\x05\x12\x10\n\x0cMULTIPOLYGON\x10\x06\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14sf/v6/geometry.proto\x12\x05sf.v6\"\"\n\x03\x43rs\x12\x0c\n\x04srid\x18\x01 \x01(\r\x12\r\n\x05scale\x18\x02 \x01(\r\"#\n\x0b\x43oordinateQ\x12\t\n\x01x\x18\x01 \x01(\x11\x12\t\n\x01y\x18\x02 \x01(\x11\"j\n\x0eStreamGeometry\x12\x1d\n\x04type\x18\x01 \x01(\x0e\x32\x0f.sf.v6.GeomType\x12\x0b\n\x03\x64xy\x18\x02 \x03(\x11\x12\x12\n\npart_sizes\x18\x03 \x03(\r\x12\x18\n\x10poly_ring_counts\x18\x04 \x03(\r\"\x87\x01\n\x17\x46\x65\x61tureCollectionStream\x12\x17\n\x03\x63rs\x18\x01 \x01(\x0b\x32\n.sf.v6.Crs\x12(\n\x0cglobal_start\x18\x02 \x01(\x0b\x32\x12.sf.v6.CoordinateQ\x12)\n\ngeometries\x18\x03 \x03(\x0b\x32\x15.sf.v6.StreamGeometry\"\x88\x01\n\x18GeometryCollectionStream\x12\x17\n\x03\x63rs\x18\x01 \x01(\x0b\x32\n.sf.v6.Crs\x12(\n\x0cglobal_start\x18\x02 \x01(\x0b\x32\x12.sf.v6.CoordinateQ\x12)\n\ngeometries\x18\x03 \x03(\x0b\x32\x15.sf.v6.StreamGeometry*\x7f\n\x08GeomType\x12\x14\n\x10GEOM_UNSPECIFIED\x10\x00\x12\t\n\x05POINT\x10\x01\x12\x0e\n\nMULTIPOINT\x10\x02\x12\x0e\n\nLINESTRING\x10\x03\x12\x13\n\x0fMULTILINESTRING\x10\x04\x12\x0b\n\x07POLYGON\x10\x05\x12\x10\n\x0cMULTIPOLYGON\x10\x06\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'sf.v6.geometry_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_GEOMTYPE']._serialized_start=557
-  _globals['_GEOMTYPE']._serialized_end=684
+  _globals['_GEOMTYPE']._serialized_start=489
+  _globals['_GEOMTYPE']._serialized_end=616
   _globals['_CRS']._serialized_start=31
   _globals['_CRS']._serialized_end=65
   _globals['_COORDINATEQ']._serialized_start=67
   _globals['_COORDINATEQ']._serialized_end=102
-  _globals['_DELTAXY']._serialized_start=104
-  _globals['_DELTAXY']._serialized_end=137
-  _globals['_STREAMGEOMETRY']._serialized_start=140
-  _globals['_STREAMGEOMETRY']._serialized_end=278
-  _globals['_FEATURECOLLECTIONSTREAM']._serialized_start=281
-  _globals['_FEATURECOLLECTIONSTREAM']._serialized_end=416
-  _globals['_GEOMETRYCOLLECTIONSTREAM']._serialized_start=419
-  _globals['_GEOMETRYCOLLECTIONSTREAM']._serialized_end=555
+  _globals['_STREAMGEOMETRY']._serialized_start=104
+  _globals['_STREAMGEOMETRY']._serialized_end=210
+  _globals['_FEATURECOLLECTIONSTREAM']._serialized_start=213
+  _globals['_FEATURECOLLECTIONSTREAM']._serialized_end=348
+  _globals['_GEOMETRYCOLLECTIONSTREAM']._serialized_start=351
+  _globals['_GEOMETRYCOLLECTIONSTREAM']._serialized_end=487
 # @@protoc_insertion_point(module_scope)

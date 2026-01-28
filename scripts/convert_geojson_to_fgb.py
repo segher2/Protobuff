@@ -1,48 +1,48 @@
+"""
+Convert a GeoJSON file to FlatGeobuf format using GDAL's ogr2ogr.
+
+Requirements:
+    - GDAL installed (conda install -c conda-forge gdal)
+    - ogr2ogr available in PATH
+
+Helpful commands (run in terminal):
+    where ogr2ogr
+
+Example usage:
+    C:\Users\Julia\miniconda3\python.exe "C:\Users\Julia\Protobuff\scripts\convert_geojson_to_fgb.py"
+"""
+
 from pathlib import Path
 import subprocess
 import shutil
 
+# define data trajectory
+DATA_DIR = Path(__file__).resolve().parents[1] / "examples" / "data"
 
-def main() -> None:
-    # repo_root / bench_out
-    # repo_root = Path(__file__).resolve().parents[1]
-    # bench_out = repo_root / "bench_out"
-    # bench_out.mkdir(exist_ok=True)
+#input GeoJSON file and output FlatGeobuf file
+input_geojson = DATA_DIR / "bag_pand_50k.geojson"
+output_fgb = DATA_DIR / "bag_pand_50k.fgb"
 
-    repo_root = Path(__file__).resolve().parents[1]
-    data = repo_root / "examples"/ "data"
-    data.mkdir(exist_ok=True)
-
-
-    # Input/Output (change names if you like)
-    input_geojson = data / "bag_pand_50k.geojson"
-    output_fgb = data / "out_bag_pand_50k.fgb"
-
-    if not input_geojson.exists():
-        raise FileNotFoundError(f"Missing input: {input_geojson}")
-
-    # Find ogr2ogr
-    ogr2ogr = shutil.which("ogr2ogr")
-    if ogr2ogr is None:
-        raise RuntimeError(
-            "ogr2ogr not found.\n"
-            "Activate a conda env with GDAL installed, e.g.:\n"
-            "  conda install -c conda-forge gdal"
-        )
-
-    # Convert GeoJSON -> FlatGeobuf
-    subprocess.run(
-        [
-            ogr2ogr,
-            "-f", "FlatGeobuf",
-            str(output_fgb),
-            str(input_geojson),
-        ],
-        check=True,
+#locate the ogr2ogr executable
+#shutil.which searches for it in the system path
+ogr2ogr = shutil.which("ogr2ogr")
+if ogr2ogr is None:
+    raise RuntimeError(
+        "ogr2ogr not found. Run using your conda env (where GDAL is installed) "
+        "or install GDAL: conda install -c conda-forge gdal"
     )
 
-    print("✅ Wrote:", output_fgb)
+#run ogr2ogr to convert GeoJSON -> FlatGeobuf
+# -f FlatGeobuf: specify output format
+# check=True: raise an error if the command fails
+subprocess.run(
+    [
+        ogr2ogr,
+        "-f", "FlatGeobuf",
+        str(output_fgb),
+        str(input_geojson),
+    ],
+    check=True,
+)
 
-
-if __name__ == "__main__":
-    main()
+print("Wrote:", output_fgb)

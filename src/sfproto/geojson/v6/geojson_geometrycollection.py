@@ -32,12 +32,12 @@ def geojson_geometrycollection_to_bytes_v6(obj_or_json: GeoJSONInput, srid: int,
     gc.global_start.x = _q(x0, scale)
     gc.global_start.y = _q(y0, scale)
 
-    cursor = (gc.global_start.x, gc.global_start.y)
+    global_start_xy = (int(gc.global_start.x), int(gc.global_start.y))
 
     for g in geoms:
         if not isinstance(g, dict):
             raise ValueError("Each geometry must be an object")
-        pb_geom, cursor = _encode_stream_geometry(g, cursor, scale)
+        pb_geom = _encode_stream_geometry(g, global_start_xy, scale)
         gc.geometries.append(pb_geom)
 
     return gc.SerializeToString()
@@ -47,11 +47,12 @@ def bytes_to_geojson_geometrycollection_v6(data: bytes) -> GeoJSON:
     gc = geometry_pb2.GeometryCollectionStream.FromString(data)
     scale = int(gc.crs.scale)
 
-    cursor = (int(gc.global_start.x), int(gc.global_start.y))
+    global_start_xy = (int(gc.global_start.x), int(gc.global_start.y))
 
     geometries: List[GeoJSON] = []
     for pb_geom in gc.geometries:
-        geom, cursor = _decode_stream_geometry(pb_geom, cursor, scale)
+        geom = _decode_stream_geometry(pb_geom, global_start_xy, scale)
         geometries.append(geom)
 
     return {"type": "GeometryCollection", "geometries": geometries}
+

@@ -1,6 +1,10 @@
 syntax = "proto3";
 package sf.v4;
 
+// This proto schema is structured similarly to how geojson geometries are structured
+// In this version, the coding of attributes IS taken into account by using struct.proto (for dynamic schema)
+
+// with struct.proto, a key is always a string and the value can be: "null", "number", "string", "boolean", "object", "array"
 import "google/protobuf/struct.proto";
 
 message Crs {
@@ -35,24 +39,15 @@ message Geometry {
   }
 }
 
-/**
- * v4 Feature wrapper:
- * - geometry: your existing sf.v4 Geometry
- * - properties: GeoJSON Feature.properties (JSON-like)
- * - id/bbox: common "outside properties" fields
- * - extra: any other top-level Feature keys (round-trip)
- */
 message Feature {
   Geometry geometry = 1;
+    // GeoJSON feature has properties, which do contain dynamic attributes
   google.protobuf.Struct properties = 2;
-
-  // GeoJSON Feature "id" (string or number in input; stored as string for simplicity)
+  // GeoJSON feature often has "id"
   string id = 3;
-
-  // GeoJSON Feature "bbox" (optional, typically 4 numbers; sometimes 6)
+  // GeoJSON feature often has "bbox"
   repeated double bbox = 4;
-
-  // Any other top-level keys outside {type, geometry, properties, id, bbox}
+  // extra (dynamic) attributes
   google.protobuf.Struct extra = 5;
 }
 
@@ -60,12 +55,12 @@ message Feature {
 message FeatureCollection {
   // GeoJSON FeatureCollection.features
   repeated Feature features = 1;
-  // GeoJSON FeatureCollection.bbox (optional)
+  // GeoJSON FeatureCollection often contains bbox
   repeated double bbox = 2;
-  // Any other top-level keys outside {type, features, bbox, name, crs}
+  // Other (dynamic) attributes
   google.protobuf.Struct extra = 3;
-  // GeoJSON FeatureCollection.name (optional)
+  // GeoJSON often contains a name
   string name = 4;
-  // Collection CRS (optional)
+  // for different crs than wgs 84, featurecollection may contain a crs
   Crs crs = 5;
 }
