@@ -1,14 +1,22 @@
 syntax = "proto3";
 package sf.v7;
 
+// In this scheme, geometries are structured similarly to GeoJSON geometries.
+// Values are stored more efficiently by using integer values, multiplying floating point numbers by a scaling factor to achieve a certain accuracy.
+// The default scaling factor is calculated with cm accuracy for its CRS.
+// Only the first point per GeoJSON input is considered as absolute points, while the rest of the coordinates are delta values.
+// In this version, the coding of attributes IS taken into account by using struct.proto (for dynamic schema)
+
+// with struct.proto, a key is always a string and the value can be: "null", "number", "string", "boolean", "object", "array"
 import "google/protobuf/struct.proto";
 
 message Crs {
   uint32 srid = 1;
-  uint32 scale = 2;
+  uint32 scale = 2; // scaling factor to make int value
 }
 
 message CoordinateQ {
+    // now stored as integer
   sint32 x = 1;
   sint32 y = 2;
 }
@@ -23,48 +31,39 @@ enum GeomType {
   MULTIPOLYGON = 6;
 }
 
-/**
- * Packed stream deltas:
- * dxy = [dx0, dy0, dx1, dy1, ...] (packed sint32)
- *
- * Encoding rule:
- * - For EACH geometry, the encoder starts cursor at global_start.
- *   (So no huge jumps between features.)
- */
+// one big (flat) array with delta encoding for all coords of the input
 message StreamGeometry {
   GeomType type = 1;
 
   repeated sint32 dxy = 2;            // packed
-  repeated uint32 part_sizes = 3;     // for ML/Poly/MP etc
+    // to understand how many coords belong to a geometry
+  repeated uint32 part_sizes = 3;     // for the 'multi' geometries
   repeated uint32 poly_ring_counts = 4; // for MultiPolygon
 }
 
-/** Feature with attributes + stream geometry */
 message Feature {
   StreamGeometry geometry = 1;
 
   google.protobuf.Struct properties = 2; // GeoJSON properties
-  string id = 3;
+  string id = 3; // feature id (optional)
   repeated double bbox = 4;             // feature bbox (optional)
-  google.protobuf.Struct extra = 5;     // other top-level feature keys
+  google.protobuf.Struct extra = 5;     // other attributes (optional)
 }
 
-/** FeatureCollection container */
 message FeatureCollection {
   repeated Feature features = 1;
-  repeated double bbox = 2;            // collection bbox (optional)
-  google.protobuf.Struct extra = 3;    // other top-level keys
-  string name = 4;                     // optional
-  Crs crs = 5;
+  repeated double bbox = 2;            // featurecollection bbox (optional)
+  google.protobuf.Struct extra = 3;    // other attributes (optional)
+  string name = 4;                     // featurecollection name (optional)
+  Crs crs = 5;                          // featurecollection crs (optional)
 
-  CoordinateQ global_start = 6;        // NEW: one absolute start for the whole collection
+  CoordinateQ global_start = 6;        // one absolute start for the whole collection
 }
 
-/** GeometryCollection container (no properties) */
 message GeometryCollection {
   repeated StreamGeometry geometries = 1;
-  repeated double bbox = 2;
-  google.protobuf.Struct extra = 3;
-  Crs crs = 4;
-  CoordinateQ global_start = 5;
+  repeated double bbox = 2; // geometrycollection bbox (optional)
+  google.protobuf.Struct extra = 3; // other attributes (optional)
+  Crs crs = 4; // geometrycollection crs (optional)
+  CoordinateQ global_start = 5; // one absolute start for the whole collection
 }
