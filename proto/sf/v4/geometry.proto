@@ -1,6 +1,9 @@
 syntax = "proto3";
 package sf.v4;
 
+// This proto schema is structured similarly to how geojson geometries are structured
+// In this version, the coding of attributes IS taken into account by using struct.proto (for dynamic schema)
+
 import "google/protobuf/struct.proto";
 
 message Crs {
@@ -35,13 +38,6 @@ message Geometry {
   }
 }
 
-/**
- * v4 Feature wrapper:
- * - geometry: your existing sf.v4 Geometry
- * - properties: GeoJSON Feature.properties (JSON-like)
- * - id/bbox: common "outside properties" fields
- * - extra: any other top-level Feature keys (round-trip)
- */
 message Feature {
   Geometry geometry = 1;
   google.protobuf.Struct properties = 2;

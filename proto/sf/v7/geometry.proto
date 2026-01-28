@@ -1,0 +1,70 @@
+syntax = "proto3";
+package sf.v7;
+
+import "google/protobuf/struct.proto";
+
+message Crs {
+  uint32 srid = 1;
+  uint32 scale = 2;
+}
+
+message CoordinateQ {
+  sint32 x = 1;
+  sint32 y = 2;
+}
+
+enum GeomType {
+  GEOM_UNSPECIFIED = 0;
+  POINT = 1;
+  MULTIPOINT = 2;
+  LINESTRING = 3;
+  MULTILINESTRING = 4;
+  POLYGON = 5;
+  MULTIPOLYGON = 6;
+}
+
+/**
+ * Packed stream deltas:
+ * dxy = [dx0, dy0, dx1, dy1, ...] (packed sint32)
+ *
+ * Encoding rule:
+ * - For EACH geometry, the encoder starts cursor at global_start.
+ *   (So no huge jumps between features.)
+ */
+message StreamGeometry {
+  GeomType type = 1;
+
+  repeated sint32 dxy = 2;            // packed
+  repeated uint32 part_sizes = 3;     // for ML/Poly/MP etc
+  repeated uint32 poly_ring_counts = 4; // for MultiPolygon
+}
+
+/** Feature with attributes + stream geometry */
+message Feature {
+  StreamGeometry geometry = 1;
+
+  google.protobuf.Struct properties = 2; // GeoJSON properties
+  string id = 3;
+  repeated double bbox = 4;             // feature bbox (optional)
+  google.protobuf.Struct extra = 5;     // other top-level feature keys
+}
+
+/** FeatureCollection container */
+message FeatureCollection {
+  repeated Feature features = 1;
+  repeated double bbox = 2;            // collection bbox (optional)
+  google.protobuf.Struct extra = 3;    // other top-level keys
+  string name = 4;                     // optional
+  Crs crs = 5;
+
+  CoordinateQ global_start = 6;        // NEW: one absolute start for the whole collection
+}
+
+/** GeometryCollection container (no properties) */
+message GeometryCollection {
+  repeated StreamGeometry geometries = 1;
+  repeated double bbox = 2;
+  google.protobuf.Struct extra = 3;
+  Crs crs = 4;
+  CoordinateQ global_start = 5;
+}

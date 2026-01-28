@@ -1,8 +1,10 @@
 syntax = "proto3";
 package sf.v1;
 
+// This proto schema is structured similarly to how geojson geometries are structured
+// In this version, the coding of attributes is NOT taken into account
+
 message Crs {
-  // EPSG code (e.g., 4326). 0 = unknown/unspecified.
   uint32 srid = 1;
 }
 

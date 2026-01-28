@@ -1,14 +1,10 @@
 import json
-# --------------------------------------- v1 ------------------------------------------
-from sfproto.geojson.v1.geojson import geojson_to_bytes, bytes_to_geojson #hopefully rest can now be removed
-# --------------------------------------- v2 ------------------------------------------
+from sfproto.geojson.v1.geojson import geojson_to_bytes, bytes_to_geojson
 from sfproto.geojson.v2.geojson import geojson_to_bytes_v2, bytes_to_geojson_v2
-# --------------------------------------- v4 ------------------------------------------
 from sfproto.geojson.v4.geojson import geojson_to_bytes_v4, bytes_to_geojson_v4
-# --------------------------------------- v5 ------------------------------------------
 from sfproto.geojson.v5.geojson import geojson_to_bytes_v5, bytes_to_geojson_v5
-# --------------------------------------- v6 ------------------------------------------
 from sfproto.geojson.v6.geojson import geojson_to_bytes_v6, bytes_to_geojson_v6
+from sfproto.geojson.v7.geojson import geojson_to_bytes_v7, bytes_to_geojson_v7
 
 from pathlib import Path
 from pyproj import CRS
@@ -79,6 +75,7 @@ def extract_srid_from_geojson(obj: Union[GeoJSON, str]) -> int:
     except ValueError:
         return DEFAULT_SRID
 
+# srid of geojson input
 _srid = extract_srid_from_geojson(_geojson_input)
 print(f'srid = {_srid}')
 
@@ -86,9 +83,9 @@ print(f'srid = {_srid}')
 # all for cm accuracy
 def get_scaler(srid:int) -> int:
     crs = CRS.from_epsg(srid)
-    # Geographic CRS -> degrees
+    # Geographic CRS -> degrees (lat/lon)
     if crs.is_geographic:
-        return 10000000  # ~1 cm-ish at mid-latitudes, safe for int32 lon/lat
+        return 10000000  # ~1 cm-ish at mid-latitudes, safe for int32 lon/lat. Although not optimal scaling factor near poles
 
     # Projected CRS -> look at axis units
     if crs.is_projected:
@@ -96,16 +93,19 @@ def get_scaler(srid:int) -> int:
 
         if "metre" in unit_name or "meter" in unit_name:
             print("it worked")
-            return 100  # 1 cm
+            return 100  # for a projected srid in [m], use scaler = 100
         if "foot" in unit_name or "feet" in unit_name:
-            return 3048
+            return 3048 # for a projected srid in [feet], use scaler = 3048
 
-    return 100 #fallback if unknown
+    return 100 #fallback if unknown. Because smallest is used, no issues with 'out of range' for sint32
 
+# get default scaler based on extracted srid
 _default_scaler = get_scaler(_srid)
 print(f'default scaler: {_default_scaler}')
 
 # ================================ ROUND TRIP ======================================
+# geojson -> encode -> binary -> decode -> geojson
+# different versions where made, the delta encoded ones need the earlier extracted default scaler
 def roundtrip(input_geojson, version, print_):
     data_length = json.dumps(input_geojson, separators=(",", ":")).encode("utf-8")
     print(f'data length: = {len(data_length)}')
@@ -124,15 +124,21 @@ def roundtrip(input_geojson, version, print_):
     elif version == 6:
         binary_representation = geojson_to_bytes_v6(input_geojson, srid=_srid, scale=_default_scaler)
         to_geojson = bytes_to_geojson_v6(binary_representation)
+    elif version == 7:
+        binary_representation = geojson_to_bytes_v7(input_geojson, srid=_srid, scale=_default_scaler)
+        to_geojson = bytes_to_geojson_v7(binary_representation)
     else:
         print(f'version = {version} does not exist')
         return
+    # remove whitespaces in json when comparing byte length by using "," and ":" instead of ", " and ": "
     geojson_bytes_fair = json.dumps(to_geojson, separators=(",", ":")).encode("utf-8")
     print(f'protobuf v{version} bytes length: {len(binary_representation)} vs fair geojson byte length: {len(geojson_bytes_fair)}')
     if print_:
         print(f'output geojson after roundtrip: {to_geojson}')
 
+# roundtrip a geojson input and compare byte length and optionally output json file again
 roundtrip(_geojson_input, 4, False)
-roundtrip(_geojson_input, _version, False)
 roundtrip(_geojson_input, 2, False)
 roundtrip(_geojson_input, 6, False)
+roundtrip(_geojson_input, _version, False)
+roundtrip(_geojson_input, 7, False)
