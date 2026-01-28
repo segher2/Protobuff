@@ -35,6 +35,7 @@ def geojson_multilinestring_to_pb(obj: GeoJSON, srid: int = 0) -> geometry_pb2.G
                 f"LineString at index {i} must have at least two points"
             )
 
+        # use multilinestring, linestring and coord message to create the geometry message
         pb_line = g.multilinestring.line_strings.add()
 
         for j, pair in enumerate(line):
@@ -69,6 +70,7 @@ def pb_to_geojson_multilinestring(g: geometry_pb2.Geometry) -> GeoJSON:
             f"Expected Geometry.multilinestring, got oneof={g.WhichOneof('geom')!r}"
         )
 
+    # output MultiLineString geometry format
     return {
         "type": "MultiLineString",
         "coordinates": [
@@ -89,11 +91,13 @@ def geojson_multilinestring_to_bytes(obj_or_json: Union[GeoJSON, str], srid: int
     """
     GeoJSON MultiLineString (dict or JSON string) -> Protobuf bytes.
     """
+    # if input geojson is string, convert to dict
     if isinstance(obj_or_json, str):
         obj = json.loads(obj_or_json)
     else:
         obj = obj_or_json
 
+    # use message to encode to binary format
     msg = geojson_multilinestring_to_pb(obj, srid=srid)
     return msg.SerializeToString()
 
@@ -102,5 +106,6 @@ def bytes_to_geojson_multilinestring(data: bytes) -> GeoJSON:
     """
     Protobuf-encoded bytes -> GeoJSON MultiLineString dict.
     """
+    # use message to decode to GeoJSON format
     msg = geometry_pb2.Geometry.FromString(data)
     return pb_to_geojson_multilinestring(msg)

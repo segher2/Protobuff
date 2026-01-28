@@ -122,12 +122,12 @@ def geojson_to_bytes(obj_or_json: GeoJSONInput, srid: int = 0) -> bytes:
     obj = _loads_if_needed(obj_or_json)
     t = obj.get("type")
 
-    # Feature -> return right tag
+    # if Feature -> give feature tag + rest as chunks
     if t == "Feature":
         payload = geojson_feature_to_bytes(obj, srid=srid)
         return _wrap(_TAG_FEAT, _pack_chunks([payload]))
 
-    # FeatureCollection -> return right tag
+    # if FeatureCollection -> give featurecollection tag + rest as chunks
     if t == "FeatureCollection":
         feats = obj.get("features")
         if not isinstance(feats, list):
@@ -135,7 +135,7 @@ def geojson_to_bytes(obj_or_json: GeoJSONInput, srid: int = 0) -> bytes:
         feat_bytes = [geojson_feature_to_bytes(f, srid=srid) for f in feats]
         return _wrap(_TAG_FCOL, _pack_chunks(feat_bytes))
 
-    # GeometryCollection -> return right tag
+    # if GeometryCollection -> give geometrycollection tag + rest as chunks
     if t == "GeometryCollection":
         geoms = obj.get("geometries")
         if not isinstance(geoms, list):
@@ -153,7 +153,7 @@ def bytes_to_geojson(data: bytes) -> GeoJSON:
     Convert bytes -> GeoJSON (Geometry | GeometryCollection | Feature | FeatureCollection).
     """
 
-    # get the input type from the encoded geometry
+    # get type from tag and input from payload of the encoded binary format
     tag, payload = _unwrap(data)
     chunks = _unpack_chunks(payload)
 

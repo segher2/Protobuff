@@ -7,8 +7,10 @@ from sfproto.sf.v2 import geometry_pb2
 
 GeoJSON = Dict[str, Any]
 
-DEFAULT_SCALE = 1000 #10^7 -> gets cm accuracy
+DEFAULT_SCALE = 1000 #parameter for accuacy
+# -> strongly relies on which srid, formula to get 'cm' accuracy scaler is in geojson_roundtrip.py file
 
+# scaler necessary for integer storing of coords
 def _require_scale(scale: int) -> int:
     scale = int(scale)
     if scale <= 0:
@@ -16,10 +18,11 @@ def _require_scale(scale: int) -> int:
     return scale
 
 def _quantize(value: float, scale: int) -> int:
-    # round half away from zero isn't needed; Python's round is fine for this use.
+    # multiply the floating number with scaler value and round to a integer
     return int(round(float(value) * scale))
 
 def _dequantize(value_i: int, scale: int) -> float:
+    # divide by scaler to get 'normal' float number back again (less precision)
     return float(value_i) / float(scale)
 
 # ============================================================
@@ -29,7 +32,6 @@ def _dequantize(value_i: int, scale: int) -> float:
 def geojson_linestring_to_pb(obj: GeoJSON, srid: int = 0, scale: int = DEFAULT_SCALE) -> geometry_pb2.Geometry:
     """
     Convert a GeoJSON LineString dict -> Protobuf Geometry message.
-    Uses ONLY Point objects internally.
     """
     if obj.get("type") != "LineString":
         raise ValueError(
@@ -44,6 +46,8 @@ def geojson_linestring_to_pb(obj: GeoJSON, srid: int = 0, scale: int = DEFAULT_S
 
     scale = _require_scale(scale)
 
+    # new list of integer coords with delta encoding to next points
+    # so first point is absolute, rest is are relative delta values
     q: List[Tuple[int,int]] = []
     for i, pair in enumerate(coords):
         if (
@@ -105,6 +109,7 @@ def pb_to_geojson_linestring(g: geometry_pb2.Geometry) -> GeoJSON:
         y += int(dy)
         coords_out.append([_dequantize(x,scale), _dequantize(y,scale)])
 
+    # output format of LineString geometry
     return {
         "type": "LineString",
         "coordinates": coords_out
@@ -119,11 +124,13 @@ def geojson_linestring_to_bytes_v2(obj_or_json: Union[GeoJSON, str], srid: int =
     """
     GeoJSON LineString (dict or JSON string) -> Protobuf bytes.
     """
+    # if input geojson is string, convert to dict
     if isinstance(obj_or_json, str):
         obj = json.loads(obj_or_json)
     else:
         obj = obj_or_json
 
+    # use message to encode to binary format
     msg = geojson_linestring_to_pb(obj, srid=srid, scale=scale)
     return msg.SerializeToString()
 
@@ -132,6 +139,7 @@ def bytes_to_geojson_linestring_v2(data: bytes) -> GeoJSON:
     """
     Protobuf-encoded bytes -> GeoJSON LineString dict.
     """
+    # use message to decode to GeoJSON format
     msg = geometry_pb2.Geometry.FromString(data)
     return pb_to_geojson_linestring(msg)
 

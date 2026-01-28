@@ -8,9 +8,7 @@ from sfproto.sf.v1 import geometry_pb2
 GeoJSON = Dict[str, Any]
 
 
-def geojson_multipolygon_to_pb(
-    obj: GeoJSON, srid: int = 0
-) -> geometry_pb2.Geometry:
+def geojson_multipolygon_to_pb(obj: GeoJSON, srid: int = 0) -> geometry_pb2.Geometry:
     """
     Convert GeoJSON MultiPolygon -> Protobuf Geometry
     """
@@ -26,6 +24,7 @@ def geojson_multipolygon_to_pb(
     g = geometry_pb2.Geometry()
     g.crs.srid = int(srid)
 
+    # use Coordinate, LinearRing, Polygon and MultiPolygon messages to create a Geometry message
     for poly in polygons:
         pb_poly = g.multipolygon.polygons.add()
 
@@ -49,9 +48,7 @@ def geojson_multipolygon_to_pb(
     return g
 
 
-def pb_to_geojson_multipolygon(
-    g: geometry_pb2.Geometry,
-) -> GeoJSON:
+def pb_to_geojson_multipolygon(g: geometry_pb2.Geometry) -> GeoJSON:
     """
     Convert Protobuf Geometry -> GeoJSON MultiPolygon
     """
@@ -73,24 +70,32 @@ def pb_to_geojson_multipolygon(
 
         coordinates.append(poly_coords)
 
+    # output Multipolygon GeoJSON format
     return {
         "type": "MultiPolygon",
         "coordinates": coordinates,
     }
 
 
-def geojson_multipolygon_to_bytes(
-    obj_or_json: Union[GeoJSON, str], srid: int = 0
-) -> bytes:
+def geojson_multipolygon_to_bytes(obj_or_json: Union[GeoJSON, str], srid: int = 0) -> bytes:
+    """
+    GeoJSON MultiPolygon (dict or JSON string) -> Protobuf bytes.
+    """
+    # if input geojson is string, convert to dict
     if isinstance(obj_or_json, str):
         obj = json.loads(obj_or_json)
     else:
         obj = obj_or_json
 
+    # use message to encode to binary format
     msg = geojson_multipolygon_to_pb(obj, srid=srid)
     return msg.SerializeToString()
 
 
 def bytes_to_geojson_multipolygon(data: bytes) -> GeoJSON:
+    """
+    Protobuf-encoded bytes -> GeoJSON MultiPolygon dict.
+    """
+    # use message to decode to GeoJSON format
     msg = geometry_pb2.Geometry.FromString(data)
     return pb_to_geojson_multipolygon(msg)

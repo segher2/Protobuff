@@ -15,8 +15,11 @@ from sfproto.geojson.v2.geojson_feature import geojson_feature_to_bytes_v2, byte
 GeoJSON = Dict[str, Any]
 GeoJSONInput = Union[GeoJSON, str]
 
-DEFAULT_SCALE = 1000 #10^7 -> gets cm accuracy
+DEFAULT_SCALE = 1000 #parameter for accuacy
+# -> strongly relies on which srid, formula to get 'cm' accuracy scaler is in geojson_roundtrip.py file
 
+# during encoding, the protobuf recieves a tag, which stores which type is encoded
+# input can be geoemtry (Point, MultiPoint, LineString, ...), geometrycollection, feature and featurecollection
 _TAG_LEN = 4
 _TAG_GEOM = b"GEOM"
 _TAG_GCOL = b"GCOL"
@@ -25,19 +28,19 @@ _TAG_FCOL = b"FCOL"
 
 
 # -------------------- helpers --------------------
-
+# if input geojson is string, convert to dict
 def _loads_if_needed(obj_or_json: GeoJSONInput) -> GeoJSON:
     if isinstance(obj_or_json, str):
         return json.loads(obj_or_json)
     return obj_or_json
 
-
+# first 4 bytes are tag of what is the geojson input type, rest is the geojson itself
 def _wrap(tag: bytes, payload: bytes) -> bytes:
     if len(tag) != _TAG_LEN:
         raise ValueError("Internal error: tag must be 4 bytes")
     return tag + payload
 
-
+# return first 4 bytes (type tag) and the rest (encoded GeoJSON)
 def _unwrap(data: bytes) -> Tuple[bytes, bytes]:
     if len(data) < _TAG_LEN:
         raise ValueError("Invalid data: too short for envelope tag")
@@ -79,10 +82,9 @@ def _unpack_chunks(payload: bytes) -> List[bytes]:
 
 
 # -------------------- geometry dispatch (v2) --------------------
-
 def _geometry_to_bytes(geometry: GeoJSON, srid: int = 0, scale: int = DEFAULT_SCALE) -> bytes:
     gtype = geometry.get("type")
-
+    # use correct function for the input type (also with using scaling factor)
     if gtype == "Point":
         return geojson_point_to_bytes_v2(geometry, srid=srid, scale=scale)
     if gtype == "MultiPoint":
@@ -118,25 +120,21 @@ def _bytes_to_geometry(data: bytes) -> GeoJSON:
     raise ValueError("Bytes do not contain a supported Geometry")
 
 
-# -------------------- public API (v2) --------------------
-
+# -------------------- actually used functions v2 --------------------
 def geojson_to_bytes_v2(obj_or_json: GeoJSONInput, srid: int = 0, scale: int = DEFAULT_SCALE) -> bytes:
     """
     Convert GeoJSON (Geometry | GeometryCollection | Feature | FeatureCollection) -> bytes.
-
     - Uses v2 encoders (quantized ints, delta encoding)
-    - Does NOT require GeometryCollection support in geometry.proto.
-      GeometryCollection is stored as an envelope containing multiple geometry payloads.
     """
     obj = _loads_if_needed(obj_or_json)
     t = obj.get("type")
 
-    # Feature
+    # if Feature -> give feature tag + rest as chunks
     if t == "Feature":
         payload = geojson_feature_to_bytes_v2(obj, srid=srid, scale=scale)
         return _wrap(_TAG_FEAT, _pack_chunks([payload]))
 
-    # FeatureCollection (store as list of Feature payloads)
+    # if FeatureCollection -> give featurecollection tag + rest as chunks
     if t == "FeatureCollection":
         feats = obj.get("features")
         if not isinstance(feats, list):
@@ -145,7 +143,7 @@ def geojson_to_bytes_v2(obj_or_json: GeoJSONInput, srid: int = 0, scale: int = D
         feat_bytes = [geojson_feature_to_bytes_v2(f, srid=srid, scale=scale) for f in feats]
         return _wrap(_TAG_FCOL, _pack_chunks(feat_bytes))
 
-    # GeometryCollection (store as list of Geometry payloads)
+    # if GeometryCollection -> give geometrycollection tag + rest as chunks
     if t == "GeometryCollection":
         geoms = obj.get("geometries")
         if not isinstance(geoms, list):
@@ -154,7 +152,7 @@ def geojson_to_bytes_v2(obj_or_json: GeoJSONInput, srid: int = 0, scale: int = D
         geom_bytes = [_geometry_to_bytes(g, srid=srid, scale=scale) for g in geoms]
         return _wrap(_TAG_GCOL, _pack_chunks(geom_bytes))
 
-    # Otherwise: plain Geometry
+    # If input is not Feature, FeatureCollection or GeometryCollection, give 'geometry tag'
     payload = _geometry_to_bytes(obj, srid=srid, scale=scale)
     return _wrap(_TAG_GEOM, _pack_chunks([payload]))
 
@@ -165,9 +163,12 @@ def bytes_to_geojson_v2(data: bytes) -> GeoJSON:
 
     Note: decoding uses per-geometry v2 decoders, which read srid/scale from the protobuf payload.
     """
+
+    # get type from tag and input from payload of the encoded binary format
     tag, payload = _unwrap(data)
     chunks = _unpack_chunks(payload)
 
+    # use tag to find use the correct decoder formula
     if tag == _TAG_GEOM:
         if len(chunks) != 1:
             raise ValueError("Invalid GEOM payload: expected 1 chunk")

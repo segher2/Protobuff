@@ -19,27 +19,29 @@ from sfproto.geojson.v4.geojson_featurecollection import geojson_featurecollecti
 GeoJSON = Dict[str, Any]
 GeoJSONInput = Union[GeoJSON, str]
 
+# during encoding, the protobuf recieves a tag, which stores which type is encoded
+# input can be geoemtry (Point, MultiPoint, LineString, ...), geometrycollection, feature and featurecollection
 _TAG_LEN = 4
-_TAG_GEOM = b"GEOM"  # single geometry payload
-_TAG_GCOL = b"GCOL"  # list of geometry payloads (GeometryCollection)
-_TAG_FEAT = b"FEAT"  # single v4 Feature payload (includes properties)
-_TAG_FCOL = b"FCOL"  # list of v4 Feature payloads
+_TAG_GEOM = b"GEOM"
+_TAG_GCOL = b"GCOL"
+_TAG_FEAT = b"FEAT"
+_TAG_FCOL = b"FCOL"
 
 
 # -------------------- helpers --------------------
-
+# if input geojson is string, convert to dict
 def _loads_if_needed(obj_or_json: GeoJSONInput) -> GeoJSON:
     if isinstance(obj_or_json, str):
         return json.loads(obj_or_json)
     return obj_or_json
 
-
+# first 4 bytes are tag of what is the geojson input type, rest is the geojson itself
 def _wrap(tag: bytes, payload: bytes) -> bytes:
     if len(tag) != _TAG_LEN:
         raise ValueError("Internal error: tag must be 4 bytes")
     return tag + payload
 
-
+# return first 4 bytes (type tag) and the rest (encoded GeoJSON)
 def _unwrap(data: bytes) -> Tuple[bytes, bytes]:
     if len(data) < _TAG_LEN:
         raise ValueError("Invalid data: too short for envelope tag")
@@ -81,10 +83,9 @@ def _unpack_chunks(payload: bytes) -> List[bytes]:
 
 
 # -------------------- geometry dispatch (v1 geometry reused) --------------------
-
 def _geometry_to_bytes(geometry: GeoJSON, srid: int = 0) -> bytes:
     gtype = geometry.get("type")
-
+    # use correct function for the input type
     if gtype == "Point":
         return geojson_point_to_bytes(geometry, srid=srid)
     if gtype == "MultiPoint":
@@ -120,30 +121,27 @@ def _bytes_to_geometry(data: bytes) -> GeoJSON:
     raise ValueError("Bytes do not contain a supported Geometry")
 
 
-# -------------------- public API --------------------
-
+# -------------------- actually used functions v4 --------------------
 def geojson_to_bytes_v4(obj_or_json: GeoJSONInput, srid: int = 0) -> bytes:
     """
     Convert GeoJSON (Geometry | GeometryCollection | Feature | FeatureCollection) -> bytes.
-
     - Geometries are encoded using v1 geometry codecs (reused).
     - Features are encoded using v4 Feature codec, preserving properties.
-    - GeometryCollection/FeatureCollection are stored as chunk lists inside the envelope.
     """
     obj = _loads_if_needed(obj_or_json)
     t = obj.get("type")
 
-    # Feature (v4, with properties)
+    # if Feature -> give feature tag + rest as chunks
     if t == "Feature":
         payload = geojson_feature_to_bytes_v4(obj, srid=srid)
         return _wrap(_TAG_FEAT, _pack_chunks([payload]))
 
-    # FeatureCollection: list of v4 Features
+    # if FeatureCollection -> give featurecollection tag + rest as chunks
     if t == "FeatureCollection":
         payload = geojson_featurecollection_to_bytes_v4(obj, srid=srid)
         return _wrap(_TAG_FCOL, _pack_chunks([payload]))
 
-    # GeometryCollection: list of geometries (no properties here)
+    # if GeometryCollection -> give geometrycollection tag + rest as chunks
     if t == "GeometryCollection":
         geoms = obj.get("geometries")
         if not isinstance(geoms, list):
@@ -152,7 +150,7 @@ def geojson_to_bytes_v4(obj_or_json: GeoJSONInput, srid: int = 0) -> bytes:
         geom_bytes = [_geometry_to_bytes(g, srid=srid) for g in geoms]
         return _wrap(_TAG_GCOL, _pack_chunks(geom_bytes))
 
-    # Otherwise: plain Geometry
+    # If input is not Feature, FeatureCollection or GeometryCollection, give 'geometry tag'
     payload = _geometry_to_bytes(obj, srid=srid)
     return _wrap(_TAG_GEOM, _pack_chunks([payload]))
 
@@ -160,11 +158,13 @@ def geojson_to_bytes_v4(obj_or_json: GeoJSONInput, srid: int = 0) -> bytes:
 def bytes_to_geojson_v4(data: bytes) -> GeoJSON:
     """
     Convert bytes -> GeoJSON (Geometry | GeometryCollection | Feature | FeatureCollection).
-    Expects the envelope produced by geojson_to_bytes_v4().
     """
+
+    # get type from tag and input from payload of the encoded binary format
     tag, payload = _unwrap(data)
     chunks = _unpack_chunks(payload)
 
+    # use tag to find use the correct decoder formula
     if tag == _TAG_GEOM:
         if len(chunks) != 1:
             raise ValueError("Invalid GEOM payload: expected 1 chunk")

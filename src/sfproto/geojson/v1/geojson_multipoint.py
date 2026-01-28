@@ -7,10 +7,7 @@ from sfproto.sf.v1 import geometry_pb2
 
 GeoJSON = Dict[str, Any]
 
-
-def geojson_multipoint_to_pb(
-    obj: GeoJSON, srid: int = 0
-) -> geometry_pb2.Geometry:
+def geojson_multipoint_to_pb(obj: GeoJSON, srid: int = 0) -> geometry_pb2.Geometry:
     """
     Convert a GeoJSON MultiPoint dict -> Protobuf Geometry message.
     """
@@ -26,6 +23,7 @@ def geojson_multipoint_to_pb(
     g = geometry_pb2.Geometry()
     g.crs.srid = int(srid)
 
+    # use Coordinate, Point and MultiPoint messages to create a Geometry message
     for coord in coords:
         if not (isinstance(coord, (list, tuple)) and len(coord) >= 2):
             raise ValueError("Each MultiPoint coordinate must be [x, y]")
@@ -51,23 +49,24 @@ def pb_to_geojson_multipoint(g: geometry_pb2.Geometry) -> GeoJSON:
     for p in g.multipoint.points:
         coordinates.append([p.coord.x, p.coord.y])
 
+    # output GeoJSON MultiPoint format
     return {
         "type": "MultiPoint",
         "coordinates": coordinates,
     }
 
 
-def geojson_multipoint_to_bytes(
-    obj_or_json: Union[GeoJSON, str], srid: int = 0
-) -> bytes:
+def geojson_multipoint_to_bytes(obj_or_json: Union[GeoJSON, str], srid: int = 0) -> bytes:
     """
-    Accepts a GeoJSON dict OR JSON string, returns Protobuf-encoded bytes.
+    GeoJSON MultiPoint (dict or JSON string) -> Protobuf bytes.
     """
+    # if input geojson is string, convert to dict
     if isinstance(obj_or_json, str):
         obj = json.loads(obj_or_json)
     else:
         obj = obj_or_json
 
+    # use message to encode to binary format
     msg = geojson_multipoint_to_pb(obj, srid=srid)
     return msg.SerializeToString()
 
@@ -76,5 +75,6 @@ def bytes_to_geojson_multipoint(data: bytes) -> GeoJSON:
     """
     Protobuf-encoded bytes -> GeoJSON MultiPoint dict.
     """
+    # use message to decode to GeoJSON format
     msg = geometry_pb2.Geometry.FromString(data)
     return pb_to_geojson_multipoint(msg)

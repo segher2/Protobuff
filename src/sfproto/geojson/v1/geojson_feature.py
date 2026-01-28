@@ -81,6 +81,7 @@ def bytes_to_geojson_feature(data: bytes) -> GeoJSON:
         try:
             # try the geoemtry decoder function, the function with the same geometry type should then work
             geometry = decoder(data)
+            # output geojson Feature format
             return {
                 "type": "Feature",
                 "geometry": geometry,

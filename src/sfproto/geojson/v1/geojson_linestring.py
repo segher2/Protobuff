@@ -40,6 +40,7 @@ def geojson_linestring_to_pb( obj: GeoJSON, srid: int = 0) -> geometry_pb2.Geome
             raise ValueError(f"Invalid coordinate at index {i}: {pair!r}")
 
         x, y = pair
+        # use line_string message from geometry.proto and add the coords (with coord message)
         p = g.line_string.points.add()
         p.coord.x = float(x)
         p.coord.y = float(y)
@@ -60,6 +61,7 @@ def pb_to_geojson_linestring( g: geometry_pb2.Geometry) -> GeoJSON:
             f"Expected Geometry.line_string, got oneof={g.WhichOneof('geom')!r}"
         )
 
+    # output format of LineString geometry
     return {
         "type": "LineString",
         "coordinates": [
@@ -79,6 +81,7 @@ def geojson_linestring_to_bytes(obj_or_json: Union[GeoJSON, str],srid: int = 0) 
     else:
         obj = obj_or_json
 
+    # use message to encode to binary format
     msg = geojson_linestring_to_pb(obj, srid=srid)
     return msg.SerializeToString()
 
@@ -87,5 +90,6 @@ def bytes_to_geojson_linestring(data: bytes) -> GeoJSON:
     """
     Protobuf-encoded bytes -> GeoJSON LineString dict.
     """
+    # use message to decode to GeoJSON format
     msg = geometry_pb2.Geometry.FromString(data)
     return pb_to_geojson_linestring(msg)

@@ -24,11 +24,11 @@ GeoJSONInput = Union[GeoJSON, str]
 
 _RESERVED_TOPLEVEL = {"type", "geometry", "properties", "id", "bbox"}
 
-
+# if input geojson is string, convert to dict
 def _loads_if_needed(obj_or_json: GeoJSONInput) -> GeoJSON:
     return json.loads(obj_or_json) if isinstance(obj_or_json, str) else obj_or_json
 
-
+# protobuf struct is string type as key and any type as value
 def _dict_to_struct(d: Optional[Dict[str, Any]]) -> Struct:
     s = Struct()
     if d is None:
@@ -52,7 +52,7 @@ def _extract_extra(obj: GeoJSON) -> Dict[str, Any]:
 
 def _encode_geometry_to_bytes(geometry: GeoJSON, srid: int) -> bytes:
     gtype = geometry.get("type")
-
+    # use correct function for the input type
     if gtype == "Point":
         return geojson_point_to_bytes(geometry, srid=srid)
     if gtype == "MultiPoint":

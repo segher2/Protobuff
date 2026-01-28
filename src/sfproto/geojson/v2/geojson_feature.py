@@ -11,30 +11,34 @@ from sfproto.geojson.v2.geojson_multilinestring import geojson_multilinestring_t
 
 GeoJSON = Dict[str, Any]
 
-DEFAULT_SCALE = 1000 #10^7 -> gets cm accuracy
+DEFAULT_SCALE = 1000 #parameter for accuacy
+# -> strongly relies on which srid, formula to get 'cm' accuracy scaler is in geojson_roundtrip.py file
 
-def geojson_feature_to_bytes_v2(
-    obj_or_json: Union[GeoJSON, str], srid: int = 0, scale: int = DEFAULT_SCALE) -> bytes:
+
+def geojson_feature_to_bytes_v2(obj_or_json: Union[GeoJSON, str], srid: int = 0, scale: int = DEFAULT_SCALE) -> bytes:
     """
     Convert GeoJSON Feature -> Protobuf Geometry bytes.
     Properties are ignored (always null).
     """
+    # if input geojson is string, convert to dict
     if isinstance(obj_or_json, str):
         obj = json.loads(obj_or_json)
     else:
         obj = obj_or_json
 
+    # only use this function if input type is feature
     if obj.get("type") != "Feature":
         raise ValueError(
             f"Expected GeoJSON type=Feature, got: {obj.get('type')!r}"
         )
-
+    # get geometry for encoding
     geometry = obj.get("geometry")
     if geometry is None:
         raise ValueError("Feature.geometry cannot be null")
 
     gtype = geometry.get("type")
 
+    # get the geoemtry type and use the correct function (with scaling factor) for that type
     if gtype == "Point":
         return geojson_point_to_bytes_v2(geometry, srid=srid, scale=scale)
 
@@ -71,7 +75,9 @@ def bytes_to_geojson_feature_v2(data: bytes) -> GeoJSON:
         bytes_to_geojson_multilinestring_v2,
     ):
         try:
+            # try the geoemtry decoder function, the function with the same geometry type should then work
             geometry = decoder(data)
+            # output geojson Feature format
             return {
                 "type": "Feature",
                 "geometry": geometry,

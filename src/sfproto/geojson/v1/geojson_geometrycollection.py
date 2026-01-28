@@ -69,9 +69,7 @@ def bytes_to_geojson_geometry(data: bytes) -> GeoJSON:
     raise ValueError("Bytes do not contain a supported Geometry")
 
 
-def geojson_geometrycollection_to_bytes(
-    obj_or_json: Union[GeoJSON, str], srid: int = 0
-) -> List[bytes]:
+def geojson_geometrycollection_to_bytes(obj_or_json: Union[GeoJSON, str], srid: int = 0) -> List[bytes]:
     """
     Convert GeoJSON GeometryCollection -> list of Protobuf Geometry bytes.
     Each geometry is encoded separately (like your FeatureCollection approach).
@@ -82,12 +80,12 @@ def geojson_geometrycollection_to_bytes(
     else:
         obj = obj_or_json
 
+    # only use this function if input type is geometry collection
     if obj.get("type") != "GeometryCollection":
         raise ValueError(
             f"Expected GeoJSON type=GeometryCollection, got: {obj.get('type')!r}"
         )
 
-    # only use this function if input type is geometry collection
     geometries = obj.get("geometries")
     if not isinstance(geometries, list):
         raise ValueError("GeometryCollection.geometries must be a list")
@@ -112,7 +110,7 @@ def bytes_to_geojson_geometrycollection(data: List[bytes]) -> GeoJSON:
     for item in data:
         geometries.append(bytes_to_geojson_geometry(item))
 
-    # output geometry collection
+    # output geometry collection format
     return {
         "type": "GeometryCollection",
         "geometries": geometries,

@@ -48,7 +48,7 @@ def bytes_to_geojson_featurecollection(data: List[bytes]) -> GeoJSON:
         feature = bytes_to_geojson_feature(item)
         features.append(feature)
 
-    # output feature collection structure
+    # output feature collection format
     return {
         "type": "FeatureCollection",
         "features": features,

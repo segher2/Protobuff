@@ -6,9 +6,10 @@ from typing import Any, Dict, List, Tuple, Union
 from sfproto.sf.v2 import geometry_pb2
 
 GeoJSON = Dict[str, Any]
-DEFAULT_SCALE = 1000  # 1e7 -> ~cm precision for lon/lat
+DEFAULT_SCALE = 1000  #parameter for accuacy
+# -> strongly relies on which srid, formula to get 'cm' accuracy scaler is in geojson_roundtrip.py file
 
-
+# scaler necessary for integer storing of coords
 def _require_scale(scale: int) -> int:
     scale = int(scale)
     if scale <= 0:
@@ -17,10 +18,12 @@ def _require_scale(scale: int) -> int:
 
 
 def _quantize(value: float, scale: int) -> int:
+    # multiply the floating number with scaler value and round to a integer
     return int(round(float(value) * scale))
 
 
 def _dequantize(value_i: int, scale: int) -> float:
+    # divide by scaler to get 'normal' float number back again (less precision)
     return float(value_i) / float(scale)
 
 
@@ -77,11 +80,10 @@ def _decode_delta_line(pb_line: geometry_pb2.DeltaLineString, scale: int) -> Lis
 # GeoJSON MultiLineString -> Protobuf Geometry (v2)
 # ============================================================
 
-def geojson_multilinestring_to_pb(
-    obj: GeoJSON,
-    srid: int = 0,
-    scale: int = DEFAULT_SCALE,
-) -> geometry_pb2.Geometry:
+def geojson_multilinestring_to_pb(obj: GeoJSON,srid: int = 0,scale: int = DEFAULT_SCALE) -> geometry_pb2.Geometry:
+    """
+    Convert a GeoJSON MultiLineString dict -> Protobuf Geometry message.
+    """
     if obj.get("type") != "MultiLineString":
         raise ValueError(f"Expected GeoJSON type=MultiLineString, got {obj.get('type')!r}")
 
@@ -95,9 +97,8 @@ def geojson_multilinestring_to_pb(
     g.crs.srid = int(srid)
     g.crs.scale = int(scale)
 
-    # IMPORTANT: fill g.multilinestring.line_strings (each is a DeltaLineString)
     for i, line in enumerate(lines):
-        q = _quantize_line(line, scale)  # quantized points for THIS line only
+        q = _quantize_line(line, scale)  # quantized points for this line only
         pb_line = g.multilinestring.line_strings.add()
         _fill_delta_line(pb_line, q)
 
@@ -109,6 +110,9 @@ def geojson_multilinestring_to_pb(
 # ============================================================
 
 def pb_to_geojson_multilinestring(g: geometry_pb2.Geometry) -> GeoJSON:
+    """
+    Convert Protobuf Geometry message -> GeoJSON MultiLineString dict.
+    """
     if not g.HasField("multilinestring"):
         raise ValueError(f"Expected Geometry.multilinestring, got oneof={g.WhichOneof('geom')!r}")
 
@@ -119,6 +123,7 @@ def pb_to_geojson_multilinestring(g: geometry_pb2.Geometry) -> GeoJSON:
     for pb_line in g.multilinestring.line_strings:
         coords_out.append(_decode_delta_line(pb_line, scale))
 
+    # output MultiLineString geometry format
     return {"type": "MultiLineString", "coordinates": coords_out}
 
 
@@ -127,11 +132,21 @@ def pb_to_geojson_multilinestring(g: geometry_pb2.Geometry) -> GeoJSON:
 # ============================================================
 
 def geojson_multilinestring_to_bytes_v2(obj_or_json: Union[GeoJSON, str],srid: int = 0,scale: int = DEFAULT_SCALE,) -> bytes:
+    """
+    GeoJSON MultiLineString (dict or JSON string) -> Protobuf bytes.
+    """
+    # if input geojson is string, convert to dict
     obj = json.loads(obj_or_json) if isinstance(obj_or_json, str) else obj_or_json
+
+    # use message to encode to binary format
     msg = geojson_multilinestring_to_pb(obj, srid=srid, scale=scale)
     return msg.SerializeToString()
 
 
 def bytes_to_geojson_multilinestring_v2(data: bytes) -> GeoJSON:
+    """
+    Protobuf-encoded bytes -> GeoJSON MultiLineString dict.
+    """
+    # use message to decode to GeoJSON format
     msg = geometry_pb2.Geometry.FromString(data)
     return pb_to_geojson_multilinestring(msg)

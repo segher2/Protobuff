@@ -7,8 +7,10 @@ from sfproto.sf.v2 import geometry_pb2
 
 GeoJSON = Dict[str, Any]
 
-DEFAULT_SCALE = 1000 # 1e7 for cm accuracy
+DEFAULT_SCALE = 1000 #parameter for accuacy
+# -> strongly relies on which srid, formula to get 'cm' accuracy scaler is in geojson_roundtrip.py file
 
+# scaler necessary for integer storing of coords
 def _require_scale(scale: int) -> int:
     scale = int(scale)
     if scale <= 0:
@@ -16,10 +18,12 @@ def _require_scale(scale: int) -> int:
     return scale
 
 def _quantize(v: float, scale: int) -> int:
+    # multiply the floating number with scaler value and round to a integer
     return int(round(float(v) * scale))
 
 
 def _dequantize(vi: int, scale: int) -> float:
+    # divide by scaler to get 'normal' float number back again (less precision)
     return float(vi) / float(scale)
 
 
@@ -44,7 +48,6 @@ def _quantize_ring(ring: List[List[float]], scale: int) -> List[Tuple[int, int]]
             raise ValueError(f"Polygon coordinates cannot be null, got {coord!r} at index {j}")
         q.append((_quantize(coord[0], scale), _quantize(coord[1], scale)))
 
-    # GeoJSON requires closed rings: ensure closure (in quantized space)
     if q[0] != q[-1]:
         q.append(q[0])
 
@@ -134,17 +137,20 @@ def pb_to_geojson_polygon(g: geometry_pb2.Geometry) -> GeoJSON:
     for pb_ring in g.polygon.rings:
         coordinates.append(_decode_delta_ring(pb_ring, scale))
 
+    # output GeoJSON Polygon format
     return {"type": "Polygon", "coordinates": coordinates}
 
 def geojson_polygon_to_bytes_v2(obj_or_json: Union[GeoJSON, str], srid: int = 0, scale: int = DEFAULT_SCALE) -> bytes:
     """
-    Accepts a GeoJSON dict OR JSON string, returns Protobuf-encoded bytes.
+    GeoJSON Polygon (dict or JSON string) -> Protobuf bytes.
     """
+    # if input geojson is string, convert to dict
     if isinstance(obj_or_json, str):
         obj = json.loads(obj_or_json)
     else:
         obj = obj_or_json
 
+    # use message to encode to binary format
     msg = geojson_polygon_to_pb(obj, srid=srid, scale=scale)
     return msg.SerializeToString()
 
@@ -153,5 +159,6 @@ def bytes_to_geojson_polygon_v2(data: bytes) -> GeoJSON:
     """
     Protobuf-encoded bytes -> GeoJSON Polygon dict.
     """
+    # use message to decode to GeoJSON format
     msg = geometry_pb2.Geometry.FromString(data)
     return pb_to_geojson_polygon(msg)

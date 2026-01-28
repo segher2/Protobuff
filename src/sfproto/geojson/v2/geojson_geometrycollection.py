@@ -12,12 +12,13 @@ from sfproto.geojson.v2.geojson_multipolygon import geojson_multipolygon_to_byte
 
 GeoJSON = Dict[str, Any]
 
-DEFAULT_SCALE = 1000 #10^7 -> gets cm accuracy
+DEFAULT_SCALE = 1000 #parameter for accuacy
+# -> strongly relies on which srid, formula to get 'cm' accuracy scaler is in geojson_roundtrip.py file
 
+# get a geometry type and encode 1 geometry to bytes
 def geojson_geometry_to_bytes(geometry: GeoJSON, srid: int = 0, scale: int = DEFAULT_SCALE) -> bytes:
     """
     Convert a GeoJSON *geometry object* -> Protobuf Geometry bytes.
-    (This is used internally for GeometryCollection.)
     """
     if not isinstance(geometry, dict):
         raise ValueError("Geometry must be a dict")
@@ -51,7 +52,7 @@ def geojson_geometry_to_bytes(geometry: GeoJSON, srid: int = 0, scale: int = DEF
 
     raise ValueError(f"Unsupported geometry type: {gtype!r}")
 
-
+# decode 1 geometry
 def bytes_to_geojson_geometry(data: bytes) -> GeoJSON:
     """
     Convert Protobuf Geometry bytes -> GeoJSON *geometry object*.
@@ -78,11 +79,13 @@ def geojson_geometrycollection_to_bytes_v2( obj_or_json: Union[GeoJSON, str], sr
     Convert GeoJSON GeometryCollection -> list of Protobuf Geometry bytes.
     Each geometry is encoded separately (like your FeatureCollection approach).
     """
+    # if input geojson is string, convert to dict
     if isinstance(obj_or_json, str):
         obj = json.loads(obj_or_json)
     else:
         obj = obj_or_json
 
+    # only use this function if input type is geometry collection
     if obj.get("type") != "GeometryCollection":
         raise ValueError(
             f"Expected GeoJSON type=GeometryCollection, got: {obj.get('type')!r}"
@@ -92,8 +95,10 @@ def geojson_geometrycollection_to_bytes_v2( obj_or_json: Union[GeoJSON, str], sr
     if not isinstance(geometries, list):
         raise ValueError("GeometryCollection.geometries must be a list")
 
+    # make a list for encoding geometries
     data: List[bytes] = []
     for geom in geometries:
+        # append the geometries to a byte list
         data.append(geojson_geometry_to_bytes(geom, srid=srid, scale=scale))
 
     return data
@@ -110,6 +115,7 @@ def bytes_to_geojson_geometrycollection_v2(data: List[bytes]) -> GeoJSON:
     for item in data:
         geometries.append(bytes_to_geojson_geometry(item))
 
+    # output geometry collection format
     return {
         "type": "GeometryCollection",
         "geometries": geometries,

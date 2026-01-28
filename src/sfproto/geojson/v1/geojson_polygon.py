@@ -22,6 +22,7 @@ def geojson_polygon_to_pb(obj: GeoJSON, srid: int = 0) -> geometry_pb2.Geometry:
     g = geometry_pb2.Geometry()
     g.crs.srid = int(srid)
 
+    # use Coordinate, LinearRing and Polygon messages to create a Geometry message
     for ring in rings:
         if not isinstance(ring, list) or len(ring) < 4:
             raise ValueError("LinearRing must have at least 4 coordinates")
@@ -55,23 +56,24 @@ def pb_to_geojson_polygon(g: geometry_pb2.Geometry) -> GeoJSON:
             ring_coords.append([c.x, c.y])
         coordinates.append(ring_coords)
 
+    # output GeoJSON Polygon format
     return {
         "type": "Polygon",
         "coordinates": coordinates,
     }
 
 
-def geojson_polygon_to_bytes(
-    obj_or_json: Union[GeoJSON, str], srid: int = 0
-) -> bytes:
+def geojson_polygon_to_bytes(obj_or_json: Union[GeoJSON, str], srid: int = 0) -> bytes:
     """
-    Accepts a GeoJSON dict OR JSON string, returns Protobuf-encoded bytes.
+    GeoJSON Polygon (dict or JSON string) -> Protobuf bytes.
     """
+    # if input geojson is string, convert to dict
     if isinstance(obj_or_json, str):
         obj = json.loads(obj_or_json)
     else:
         obj = obj_or_json
 
+    # use message to encode to binary format
     msg = geojson_polygon_to_pb(obj, srid=srid)
     return msg.SerializeToString()
 
@@ -80,5 +82,6 @@ def bytes_to_geojson_polygon(data: bytes) -> GeoJSON:
     """
     Protobuf-encoded bytes -> GeoJSON Polygon dict.
     """
+    # use message to decode to GeoJSON format
     msg = geometry_pb2.Geometry.FromString(data)
     return pb_to_geojson_polygon(msg)
