@@ -7,6 +7,9 @@ __pycache__/
 *.pyd
 *.so
 
+*.geojson
+*.fgb
+
 # Virtual environments
 .venv/
 venv/

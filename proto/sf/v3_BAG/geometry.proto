@@ -35,28 +35,46 @@ message Polygon {
 
 enum PandStatus {
   PAND_STATUS_UNSPECIFIED = 0;
-  PAND_IN_GEBRUIK = 1;       // "Pand in gebruik"
-  VERBOUWING_PAND = 2;       // "Verbouwing pand"
-  // add more statuses you encounter
+
+  PAND_IN_GEBRUIK = 1;              // "Pand in gebruik"
+  VERBOUWING_PAND = 2;              // "Verbouwing pand"
+  SLOOPVERGUNNING_VERLEEND = 3;     // "Sloopvergunning verleend"
+  BOUW_GESTART = 4;                 // "Bouw gestart"
+  BOUWVERGUNNING_VERLEEND = 5;      // "Bouwvergunning verleend"
 }
 
+
 enum Gebruiksdoel {
-  GEBRUIKSDOEL_UNSPECIFIED = 0; // empty string / unknown
+  GEBRUIKSDOEL_UNSPECIFIED = 0;
+
   WOONFUNCTIE = 1;
-  // add more you encounter
+  KANTOORFUNCTIE = 2;
+  WINKELFUNCTIE = 3;
+  INDUSTRIEFUNCTIE = 4;
+  BIJEENKOMSTFUNCTIE = 5;
+  ONDERWIJSFUNCTIE = 6;
+  GEZONDHEIDSZORGFUNCTIE = 7;
+  SPORTFUNCTIE = 8;
+  LOGIESFUNCTIE = 9;
+  OVERIGE_GEBRUIKSFUNCTIE = 10;
 }
+
 
 message PandProperties {
   uint64 identificatie = 1;       // BAG identificatie (16 digits)
   uint32 bouwjaar = 2;
+
   PandStatus status = 3;
-  Gebruiksdoel gebruiksdoel = 4;
+
+  // multiple allowed
+  repeated Gebruiksdoel gebruiksdoelen = 4;
 
   optional uint32 oppervlakte_min = 5;
   optional uint32 oppervlakte_max = 6;
 
   uint32 aantal_verblijfsobjecten = 7;
 }
+
 
 message PandFeature {
   bytes uuid = 1;                 // 16 bytes (from "pand.<uuid>")

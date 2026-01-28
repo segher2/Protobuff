@@ -7,7 +7,7 @@ from sfproto.sf.v2 import geometry_pb2
 
 GeoJSON = Dict[str, Any]
 
-DEFAULT_SCALE = 10000000 #10^7 -> gets cm accuracy
+DEFAULT_SCALE = 1000 #10^7 -> gets cm accuracy
 
 def _require_scale(scale: int) -> int:
     scale = int(scale)

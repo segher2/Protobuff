@@ -24,17 +24,17 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x18sf/v3_BAG/geometry.proto\x12\x0b\x62\x61g.pand.v1\"\"\n\x03\x43rs\x12\x0c\n\x04srid\x18\x01 \x01(\r\x12\r\n\x05scale\x18\x02 \x01(\r\"?\n\x05\x42\x42oxQ\x12\x0c\n\x04minx\x18\x01 \x01(\x11\x12\x0c\n\x04miny\x18\x02 \x01(\x11\x12\x0c\n\x04maxx\x18\x03 \x01(\x11\x12\x0c\n\x04maxy\x18\x04 \x01(\x11\"#\n\x0b\x43oordinateQ\x12\t\n\x01x\x18\x01 \x01(\x11\x12\t\n\x01y\x18\x02 \x01(\x11\"L\n\tDeltaRing\x12\'\n\x05start\x18\x01 \x01(\x0b\x32\x18.bag.pand.v1.CoordinateQ\x12\n\n\x02\x64x\x18\x02 \x03(\x11\x12\n\n\x02\x64y\x18\x03 \x03(\x11\"0\n\x07Polygon\x12%\n\x05rings\x18\x01 \x03(\x0b\x32\x16.bag.pand.v1.DeltaRing\"\x99\x02\n\x0ePandProperties\x12\x15\n\ridentificatie\x18\x01 \x01(\x04\x12\x10\n\x08\x62ouwjaar\x18\x02 \x01(\r\x12\'\n\x06status\x18\x03 \x01(\x0e\x32\x17.bag.pand.v1.PandStatus\x12/\n\x0cgebruiksdoel\x18\x04 \x01(\x0e\x32\x19.bag.pand.v1.Gebruiksdoel\x12\x1c\n\x0foppervlakte_min\x18\x05 \x01(\rH\x00\x88\x01\x01\x12\x1c\n\x0foppervlakte_max\x18\x06 \x01(\rH\x01\x88\x01\x01\x12 \n\x18\x61\x61ntal_verblijfsobjecten\x18\x07 \x01(\rB\x12\n\x10_oppervlakte_minB\x12\n\x10_oppervlakte_max\"\x96\x01\n\x0bPandFeature\x12\x0c\n\x04uuid\x18\x01 \x01(\x0c\x12/\n\nproperties\x18\x02 \x01(\x0b\x32\x1b.bag.pand.v1.PandProperties\x12 \n\x04\x62\x62ox\x18\x03 \x01(\x0b\x32\x12.bag.pand.v1.BBoxQ\x12&\n\x08geometry\x18\x04 \x01(\x0b\x32\x14.bag.pand.v1.Polygon\"\x84\x01\n\x15PandFeatureCollection\x12\x1d\n\x03\x63rs\x18\x01 \x01(\x0b\x32\x10.bag.pand.v1.Crs\x12 \n\x04\x62\x62ox\x18\x02 \x01(\x0b\x32\x12.bag.pand.v1.BBoxQ\x12*\n\x08\x66\x65\x61tures\x18\x03 \x03(\x0b\x32\x18.bag.pand.v1.PandFeature*S\n\nPandStatus\x12\x1b\n\x17PAND_STATUS_UNSPECIFIED\x10\x00\x12\x13\n\x0fPAND_IN_GEBRUIK\x10\x01\x12\x13\n\x0fVERBOUWING_PAND\x10\x02*=\n\x0cGebruiksdoel\x12\x1c\n\x18GEBRUIKSDOEL_UNSPECIFIED\x10\x00\x12\x0f\n\x0bWOONFUNCTIE\x10\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x18sf/v3_BAG/geometry.proto\x12\x0b\x62\x61g.pand.v1\"\"\n\x03\x43rs\x12\x0c\n\x04srid\x18\x01 \x01(\r\x12\r\n\x05scale\x18\x02 \x01(\r\"?\n\x05\x42\x42oxQ\x12\x0c\n\x04minx\x18\x01 \x01(\x11\x12\x0c\n\x04miny\x18\x02 \x01(\x11\x12\x0c\n\x04maxx\x18\x03 \x01(\x11\x12\x0c\n\x04maxy\x18\x04 \x01(\x11\"#\n\x0b\x43oordinateQ\x12\t\n\x01x\x18\x01 \x01(\x11\x12\t\n\x01y\x18\x02 \x01(\x11\"L\n\tDeltaRing\x12\'\n\x05start\x18\x01 \x01(\x0b\x32\x18.bag.pand.v1.CoordinateQ\x12\n\n\x02\x64x\x18\x02 \x03(\x11\x12\n\n\x02\x64y\x18\x03 \x03(\x11\"0\n\x07Polygon\x12%\n\x05rings\x18\x01 \x03(\x0b\x32\x16.bag.pand.v1.DeltaRing\"\x9b\x02\n\x0ePandProperties\x12\x15\n\ridentificatie\x18\x01 \x01(\x04\x12\x10\n\x08\x62ouwjaar\x18\x02 \x01(\r\x12\'\n\x06status\x18\x03 \x01(\x0e\x32\x17.bag.pand.v1.PandStatus\x12\x31\n\x0egebruiksdoelen\x18\x04 \x03(\x0e\x32\x19.bag.pand.v1.Gebruiksdoel\x12\x1c\n\x0foppervlakte_min\x18\x05 \x01(\rH\x00\x88\x01\x01\x12\x1c\n\x0foppervlakte_max\x18\x06 \x01(\rH\x01\x88\x01\x01\x12 \n\x18\x61\x61ntal_verblijfsobjecten\x18\x07 \x01(\rB\x12\n\x10_oppervlakte_minB\x12\n\x10_oppervlakte_max\"\x96\x01\n\x0bPandFeature\x12\x0c\n\x04uuid\x18\x01 \x01(\x0c\x12/\n\nproperties\x18\x02 \x01(\x0b\x32\x1b.bag.pand.v1.PandProperties\x12 \n\x04\x62\x62ox\x18\x03 \x01(\x0b\x32\x12.bag.pand.v1.BBoxQ\x12&\n\x08geometry\x18\x04 \x01(\x0b\x32\x14.bag.pand.v1.Polygon\"\x84\x01\n\x15PandFeatureCollection\x12\x1d\n\x03\x63rs\x18\x01 \x01(\x0b\x32\x10.bag.pand.v1.Crs\x12 \n\x04\x62\x62ox\x18\x02 \x01(\x0b\x32\x12.bag.pand.v1.BBoxQ\x12*\n\x08\x66\x65\x61tures\x18\x03 \x03(\x0b\x32\x18.bag.pand.v1.PandFeature*\xa0\x01\n\nPandStatus\x12\x1b\n\x17PAND_STATUS_UNSPECIFIED\x10\x00\x12\x13\n\x0fPAND_IN_GEBRUIK\x10\x01\x12\x13\n\x0fVERBOUWING_PAND\x10\x02\x12\x1c\n\x18SLOOPVERGUNNING_VERLEEND\x10\x03\x12\x10\n\x0c\x42OUW_GESTART\x10\x04\x12\x1b\n\x17\x42OUWVERGUNNING_VERLEEND\x10\x05*\x86\x02\n\x0cGebruiksdoel\x12\x1c\n\x18GEBRUIKSDOEL_UNSPECIFIED\x10\x00\x12\x0f\n\x0bWOONFUNCTIE\x10\x01\x12\x12\n\x0eKANTOORFUNCTIE\x10\x02\x12\x11\n\rWINKELFUNCTIE\x10\x03\x12\x14\n\x10INDUSTRIEFUNCTIE\x10\x04\x12\x16\n\x12\x42IJEENKOMSTFUNCTIE\x10\x05\x12\x14\n\x10ONDERWIJSFUNCTIE\x10\x06\x12\x1a\n\x16GEZONDHEIDSZORGFUNCTIE\x10\x07\x12\x10\n\x0cSPORTFUNCTIE\x10\x08\x12\x11\n\rLOGIESFUNCTIE\x10\t\x12\x1b\n\x17OVERIGE_GEBRUIKSFUNCTIE\x10\nb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'sf.v3_BAG.geometry_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_PANDSTATUS']._serialized_start=879
-  _globals['_PANDSTATUS']._serialized_end=962
-  _globals['_GEBRUIKSDOEL']._serialized_start=964
-  _globals['_GEBRUIKSDOEL']._serialized_end=1025
+  _globals['_PANDSTATUS']._serialized_start=882
+  _globals['_PANDSTATUS']._serialized_end=1042
+  _globals['_GEBRUIKSDOEL']._serialized_start=1045
+  _globals['_GEBRUIKSDOEL']._serialized_end=1307
   _globals['_CRS']._serialized_start=41
   _globals['_CRS']._serialized_end=75
   _globals['_BBOXQ']._serialized_start=77
@@ -46,9 +46,9 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_POLYGON']._serialized_start=257
   _globals['_POLYGON']._serialized_end=305
   _globals['_PANDPROPERTIES']._serialized_start=308
-  _globals['_PANDPROPERTIES']._serialized_end=589
-  _globals['_PANDFEATURE']._serialized_start=592
-  _globals['_PANDFEATURE']._serialized_end=742
-  _globals['_PANDFEATURECOLLECTION']._serialized_start=745
-  _globals['_PANDFEATURECOLLECTION']._serialized_end=877
+  _globals['_PANDPROPERTIES']._serialized_end=591
+  _globals['_PANDFEATURE']._serialized_start=594
+  _globals['_PANDFEATURE']._serialized_end=744
+  _globals['_PANDFEATURECOLLECTION']._serialized_start=747
+  _globals['_PANDFEATURECOLLECTION']._serialized_end=879
 # @@protoc_insertion_point(module_scope)

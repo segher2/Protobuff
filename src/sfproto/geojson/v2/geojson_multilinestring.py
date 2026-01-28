@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple, Union
 from sfproto.sf.v2 import geometry_pb2
 
 GeoJSON = Dict[str, Any]
-DEFAULT_SCALE = 10000000  # 1e7 -> ~cm precision for lon/lat
+DEFAULT_SCALE = 1000  # 1e7 -> ~cm precision for lon/lat
 
 
 def _require_scale(scale: int) -> int:

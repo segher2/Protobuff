@@ -13,7 +13,7 @@ from sfproto.geojson.v5.geojson_feature import geojson_feature_to_bytes_v5, byte
 GeoJSON = Dict[str, Any]
 GeoJSONInput = Union[GeoJSON, str]
 
-DEFAULT_SCALE = 10000000  # 1e7 -> ~cm accuracy for EPSG:4326
+DEFAULT_SCALE = 1000  # 1e7 -> ~cm accuracy for EPSG:4326
 
 _RESERVED_FCOL = {"type", "features", "bbox", "name", "crs"}
 

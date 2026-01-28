@@ -17,7 +17,7 @@ from sfproto.geojson.v5.geojson_featurecollection import geojson_featurecollecti
 GeoJSON = Dict[str, Any]
 GeoJSONInput = Union[GeoJSON, str]
 
-DEFAULT_SCALE = 10000000  # 1e7 -> ~cm accuracy in EPSG:4326
+DEFAULT_SCALE = 1000 # 1e7 -> ~cm accuracy in EPSG:4326
 
 _TAG_LEN = 4
 _TAG_GEOM = b"GEOM"

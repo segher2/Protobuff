@@ -12,7 +12,7 @@ from sfproto.geojson.v2.geojson_multipolygon import geojson_multipolygon_to_byte
 
 GeoJSON = Dict[str, Any]
 
-DEFAULT_SCALE = 10000000 #10^7 -> gets cm accuracy
+DEFAULT_SCALE = 1000 #10^7 -> gets cm accuracy
 
 def geojson_geometry_to_bytes(geometry: GeoJSON, srid: int = 0, scale: int = DEFAULT_SCALE) -> bytes:
     """

@@ -18,7 +18,7 @@ from sfproto.geojson.v2.geojson_multilinestring import geojson_multilinestring_t
 GeoJSON = Dict[str, Any]
 GeoJSONInput = Union[GeoJSON, str]
 
-DEFAULT_SCALE = 10000000  # 1e7 -> ~cm in EPSG:4326
+DEFAULT_SCALE = 1000  # 1e7 -> ~cm in EPSG:4326
 
 _RESERVED_TOPLEVEL = {"type", "geometry", "properties", "id", "bbox"}
 

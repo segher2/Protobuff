@@ -18,22 +18,34 @@ GeoJSON = Dict[str, Any]
 DEFAULT_SRID = 28992
 DEFAULT_SCALE = 1000  # mm precision for EPSG:28992
 
-# --- Enum mapping (extend as you encounter more values) ---
+# --- Enum mapping ---
 
 STATUS_MAP = {
     "Pand in gebruik": pand_pb2.PAND_IN_GEBRUIK,
     "Verbouwing pand": pand_pb2.VERBOUWING_PAND,
+    "Sloopvergunning verleend": pand_pb2.SLOOPVERGUNNING_VERLEEND,
+    "Bouw gestart": pand_pb2.BOUW_GESTART,
+    "Bouwvergunning verleend": pand_pb2.BOUWVERGUNNING_VERLEEND,
 }
+
+STATUS_MAP_REV = {v: k for k, v in STATUS_MAP.items()}
+
 
 GEBRUIKSDOEL_MAP = {
-    "": pand_pb2.GEBRUIKSDOEL_UNSPECIFIED,
     "woonfunctie": pand_pb2.WOONFUNCTIE,
-    # add more as needed
+    "kantoorfunctie": pand_pb2.KANTOORFUNCTIE,
+    "winkelfunctie": pand_pb2.WINKELFUNCTIE,
+    "industriefunctie": pand_pb2.INDUSTRIEFUNCTIE,
+    "bijeenkomstfunctie": pand_pb2.BIJEENKOMSTFUNCTIE,
+    "onderwijsfunctie": pand_pb2.ONDERWIJSFUNCTIE,
+    "gezondheidszorgfunctie": pand_pb2.GEZONDHEIDSZORGFUNCTIE,
+    "sportfunctie": pand_pb2.SPORTFUNCTIE,
+    "logiesfunctie": pand_pb2.LOGIESFUNCTIE,
+    "overige gebruiksfunctie": pand_pb2.OVERIGE_GEBRUIKSFUNCTIE,
 }
 
-# Reverse maps for decoding back to GeoJSON
-STATUS_MAP_REV = {v: k for k, v in STATUS_MAP.items()}
 GEBRUIKSDOEL_MAP_REV = {v: k for k, v in GEBRUIKSDOEL_MAP.items()}
+
 
 
 # --- Quantization helpers ---
@@ -185,15 +197,19 @@ def _encode_properties(props: GeoJSON) -> pand_pb2.PandProperties:
     if not isinstance(bouwjaar, int):
         raise ValueError("properties.bouwjaar must be an int")
 
-    status_str = props.get("status", "")
-    if not isinstance(status_str, str):
-        status_str = str(status_str)
+    status_str = str(props.get("status", ""))
     status_enum = STATUS_MAP.get(status_str, pand_pb2.PAND_STATUS_UNSPECIFIED)
 
-    gebruiksdoel_str = props.get("gebruiksdoel", "")
-    if not isinstance(gebruiksdoel_str, str):
-        gebruiksdoel_str = str(gebruiksdoel_str)
-    gebruiksdoel_enum = GEBRUIKSDOEL_MAP.get(gebruiksdoel_str, pand_pb2.GEBRUIKSDOEL_UNSPECIFIED)
+    # --- FIX: multi-valued gebruiksdoel ---
+    gebruiksdoel_raw = props.get("gebruiksdoel", "")
+    doelen: List[int] = []
+
+    if isinstance(gebruiksdoel_raw, str) and gebruiksdoel_raw.strip():
+        for token in gebruiksdoel_raw.split(","):
+            token = token.strip()
+            enum_val = GEBRUIKSDOEL_MAP.get(token)
+            if enum_val is not None:
+                doelen.append(enum_val)
 
     aantal_vo = props.get("aantal_verblijfsobjecten", 0)
     if not isinstance(aantal_vo, int):
@@ -203,17 +219,20 @@ def _encode_properties(props: GeoJSON) -> pand_pb2.PandProperties:
         identificatie=ident_u64,
         bouwjaar=bouwjaar,
         status=status_enum,
-        gebruiksdoel=gebruiksdoel_enum,
         aantal_verblijfsobjecten=aantal_vo,
     )
 
+    # add repeated enums
+    out.gebruiksdoelen.extend(doelen)
+
     # optional fields
-    if "oppervlakte_min" in props and props["oppervlakte_min"] is not None:
+    if props.get("oppervlakte_min") is not None:
         out.oppervlakte_min = int(props["oppervlakte_min"])
-    if "oppervlakte_max" in props and props["oppervlakte_max"] is not None:
+    if props.get("oppervlakte_max") is not None:
         out.oppervlakte_max = int(props["oppervlakte_max"])
 
     return out
+
 
 
 def _decode_properties(p: pand_pb2.PandProperties) -> GeoJSON:
@@ -221,19 +240,28 @@ def _decode_properties(p: pand_pb2.PandProperties) -> GeoJSON:
         "identificatie": f"{p.identificatie:016d}",
         "bouwjaar": int(p.bouwjaar),
         "status": STATUS_MAP_REV.get(p.status, ""),
-        "gebruiksdoel": GEBRUIKSDOEL_MAP_REV.get(p.gebruiksdoel, ""),
         "aantal_verblijfsobjecten": int(p.aantal_verblijfsobjecten),
-        # rdf_seealso can be reconstructed if you want:
         "rdf_seealso": f"http://bag.basisregistraties.overheid.nl/bag/id/pand/{p.identificatie:016d}",
     }
 
-    # optional presence: in proto3 python, HasField works for optional scalars
+    # --- FIX: repeated gebruiksdoelen ---
+    if p.gebruiksdoelen:
+        doelen = [
+            GEBRUIKSDOEL_MAP_REV.get(d, "")
+            for d in p.gebruiksdoelen
+            if d in GEBRUIKSDOEL_MAP_REV
+        ]
+        props["gebruiksdoel"] = ",".join(doelen)
+    else:
+        props["gebruiksdoel"] = ""
+
     if p.HasField("oppervlakte_min"):
         props["oppervlakte_min"] = int(p.oppervlakte_min)
     if p.HasField("oppervlakte_max"):
         props["oppervlakte_max"] = int(p.oppervlakte_max)
 
     return props
+
 
 
 # --- Public API (mirrors your previous style) ---

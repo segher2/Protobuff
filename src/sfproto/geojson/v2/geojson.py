@@ -15,7 +15,7 @@ from sfproto.geojson.v2.geojson_feature import geojson_feature_to_bytes_v2, byte
 GeoJSON = Dict[str, Any]
 GeoJSONInput = Union[GeoJSON, str]
 
-DEFAULT_SCALE = 10000000 #10^7 -> gets cm accuracy
+DEFAULT_SCALE = 1000 #10^7 -> gets cm accuracy
 
 _TAG_LEN = 4
 _TAG_GEOM = b"GEOM"

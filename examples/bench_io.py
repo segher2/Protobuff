@@ -328,7 +328,7 @@ if __name__ == "__main__":
     # Option A: load a GeoJSON polygon from a file
     # Put your test polygon in "test_polygon.geojson" or "test_polygon.json"
     # containing a single Polygon object: {"type":"Polygon","coordinates":[...]}
-    p = Path("test_polygon.geojson")
+    p = Path("awd")
     if p.exists():
         geojson_obj = json.loads(p.read_text(encoding="utf-8"))
         benchmark_io(geojson_obj, runs=200, warmup=20)

@@ -11,7 +11,7 @@ from sfproto.geojson.v2.geojson_multilinestring import geojson_multilinestring_t
 
 GeoJSON = Dict[str, Any]
 
-DEFAULT_SCALE = 10000000 #10^7 -> gets cm accuracy
+DEFAULT_SCALE = 1000 #10^7 -> gets cm accuracy
 
 def geojson_feature_to_bytes_v2(
     obj_or_json: Union[GeoJSON, str], srid: int = 0, scale: int = DEFAULT_SCALE) -> bytes:
