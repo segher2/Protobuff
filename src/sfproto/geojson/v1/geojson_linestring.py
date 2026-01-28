@@ -12,13 +12,9 @@ GeoJSON = Dict[str, Any]
 # GeoJSON LineString -> Protobuf Geometry
 # ============================================================
 
-def geojson_linestring_to_pb(
-    obj: GeoJSON,
-    srid: int = 0
-) -> geometry_pb2.Geometry:
+def geojson_linestring_to_pb( obj: GeoJSON, srid: int = 0) -> geometry_pb2.Geometry:
     """
     Convert a GeoJSON LineString dict -> Protobuf Geometry message.
-    Uses ONLY Point objects internally.
     """
     if obj.get("type") != "LineString":
         raise ValueError(
@@ -55,9 +51,7 @@ def geojson_linestring_to_pb(
 # Protobuf Geometry -> GeoJSON LineString
 # ============================================================
 
-def pb_to_geojson_linestring(
-    g: geometry_pb2.Geometry
-) -> GeoJSON:
+def pb_to_geojson_linestring( g: geometry_pb2.Geometry) -> GeoJSON:
     """
     Convert Protobuf Geometry message -> GeoJSON LineString dict.
     """
@@ -75,17 +69,11 @@ def pb_to_geojson_linestring(
     }
 
 
-# ============================================================
-# Bytes helpers
-# ============================================================
-
-def geojson_linestring_to_bytes(
-    obj_or_json: Union[GeoJSON, str],
-    srid: int = 0
-) -> bytes:
+def geojson_linestring_to_bytes(obj_or_json: Union[GeoJSON, str],srid: int = 0) -> bytes:
     """
     GeoJSON LineString (dict or JSON string) -> Protobuf bytes.
     """
+    # if input geojson is string, convert to dict
     if isinstance(obj_or_json, str):
         obj = json.loads(obj_or_json)
     else:
@@ -95,9 +83,7 @@ def geojson_linestring_to_bytes(
     return msg.SerializeToString()
 
 
-def bytes_to_geojson_linestring(
-    data: bytes
-) -> GeoJSON:
+def bytes_to_geojson_linestring(data: bytes) -> GeoJSON:
     """
     Protobuf-encoded bytes -> GeoJSON LineString dict.
     """

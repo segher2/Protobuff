@@ -19,22 +19,26 @@ def geojson_feature_to_bytes(
     Convert GeoJSON Feature -> Protobuf Geometry bytes.
     Properties are ignored (always null).
     """
+    # if input geojson is string, convert to dict
     if isinstance(obj_or_json, str):
         obj = json.loads(obj_or_json)
     else:
         obj = obj_or_json
 
+    # only use this function if input type is feature
     if obj.get("type") != "Feature":
         raise ValueError(
             f"Expected GeoJSON type=Feature, got: {obj.get('type')!r}"
         )
 
+    # get geometry for encoding
     geometry = obj.get("geometry")
     if geometry is None:
         raise ValueError("Feature.geometry cannot be null")
 
     gtype = geometry.get("type")
 
+    # get the geoemtry type and use the correct function for that type
     if gtype == "Point":
         return geojson_point_to_bytes(geometry, srid=srid)
 
@@ -75,11 +79,12 @@ def bytes_to_geojson_feature(data: bytes) -> GeoJSON:
         bytes_to_geojson_geometrycollection,
     ):
         try:
+            # try the geoemtry decoder function, the function with the same geometry type should then work
             geometry = decoder(data)
             return {
                 "type": "Feature",
                 "geometry": geometry,
-                "properties": None,
+                "properties": None, # to make a valid geojson, properties are added, but set to 'None'
             }
         except Exception:
             pass
