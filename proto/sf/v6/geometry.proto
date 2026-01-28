@@ -1,12 +1,19 @@
 syntax = "proto3";
 package sf.v6;
 
+// In this scheme, geometries are structured similarly to GeoJSON geometries.
+// Values are stored more efficiently by using integer values, multiplying floating point numbers by a scaling factor to achieve a certain accuracy.
+// The default scaling factor is calculated with cm accuracy for its CRS.
+// Only the first point per GeoJSON input is considered as absolute points, while the rest of the coordinates are delta values.
+// In this version, the coding of attributes is NOT taken into account
+
 message Crs {
   uint32 srid = 1;
-  uint32 scale = 2;
+  uint32 scale = 2; // scaling factor to make int value
 }
 
 message CoordinateQ {
+    // now stored as integer
   sint32 x = 1;
   sint32 y = 2;
 }
@@ -21,44 +28,28 @@ enum GeomType {
   MULTIPOLYGON = 6;
 }
 
-/**
- * Stream geometry with packed deltas.
- *
- * dxy is packed sint32:
- *   [dx0, dy0, dx1, dy1, ...]
- *
- * IMPORTANT encoding rule:
- * - Each geometry is encoded relative to (cursor = global_start) at the start.
- *   That avoids huge inter-geometry jumps.
- *
- * Nesting reconstruction:
- * - part_sizes:
- *     LineString: [n]
- *     MultiLineString: [n_line1, n_line2, ...]
- *     Polygon: [n_ring1, n_ring2, ...]
- *     MultiPoint: [n] (optional, but keep it if you like)
- * - poly_ring_counts:
- *     MultiPolygon: [rings_in_poly1, rings_in_poly2, ...]
- *     and part_sizes holds ring sizes in polygon order.
- */
+// one big (flat) array with delta encoding for all coords of the input
 message StreamGeometry {
   GeomType type = 1;
 
   // packed: [dx0, dy0, dx1, dy1, ...]
   repeated sint32 dxy = 2;
 
+    // to understand how many coords belong to a geometry
   repeated uint32 part_sizes = 3;
   repeated uint32 poly_ring_counts = 4;
 }
 
 message FeatureCollectionStream {
   Crs crs = 1;
+    // for featurecollection 1 global start, rest as delta encoding, if input just is a geometry, use v2
   CoordinateQ global_start = 2;
   repeated StreamGeometry geometries = 3;
 }
 
 message GeometryCollectionStream {
   Crs crs = 1;
+    // for geometrycollection 1 global start, rest as delta encoding, if input just is a geometry, use v2
   CoordinateQ global_start = 2;
   repeated StreamGeometry geometries = 3;
 }

@@ -32,7 +32,7 @@ geojson_multipolygon = load_geojson('data/MultiPolygon.geojson')
 geojson_geometrycollection = load_geojson('data/GeometryCollection.geojson')
 geojson_feature = load_geojson('data/Feature.geojson')
 geojson_featurecollection = load_geojson('data/FeatureCollection.geojson')
-geojson_BAG = load_geojson('data/bag_pand_count_10000.geojson')
+geojson_BAG = load_geojson('data/bag_pand_count_10.geojson')
 
 
 _geojson_input = geojson_BAG
@@ -137,8 +137,9 @@ def roundtrip(input_geojson, version, print_):
         print(f'output geojson after roundtrip: {to_geojson}')
 
 # roundtrip a geojson input and compare byte length and optionally output json file again
-roundtrip(_geojson_input, 4, False)
-roundtrip(_geojson_input, 2, False)
-roundtrip(_geojson_input, 6, False)
-roundtrip(_geojson_input, _version, False)
-roundtrip(_geojson_input, 7, False)
+roundtrip(_geojson_input, 4, True)
+print(f'output geojson before roundtrip: {_geojson_input}')
+# roundtrip(_geojson_input, 2, False)
+# roundtrip(_geojson_input, 6, False)
+# roundtrip(_geojson_input, _version, False)
+# roundtrip(_geojson_input, 7, False)

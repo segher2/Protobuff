@@ -1,19 +1,22 @@
 syntax = "proto3";
 package sf.v5;
 
+// In this scheme, geometries are structured similarly to GeoJSON geometries.
+// Values are stored more efficiently by using integer values, multiplying floating point numbers by a scaling factor to achieve a certain accuracy.
+// The default scaling factor is calculated with cm accuracy for its CRS.
+// Only the first point per geometry is considered as absolute points, while the rest of the coordinates are delta values.
+// In this version, the coding of attributes IS taken into account by using struct.proto (for dynamic schema)
+
+// with struct.proto, a key is always a string and the value can be: "null", "number", "string", "boolean", "object", "array"
 import "google/protobuf/struct.proto";
 
 message Crs {
-  // EPSG code (e.g., 4326). 0 = unknown/unspecified.
   uint32 srid = 1;
-
-  // Quantization scale factor:
-  // real = int_value / scale
-  uint32 scale = 2;
+  uint32 scale = 2; // scaling factor to make int value
 }
 
 message Coordinate {
-  // Quantized integer coordinate (scaled)
+  // now stored as integer
   sint32 x = 1;
   sint32 y = 2;
 }
@@ -21,18 +24,18 @@ message Coordinate {
 message Point { Coordinate coord = 1; }
 message MultiPoint { repeated Point points = 1; }
 
-/**
- * Delta-encoded LineString.
- * points[0] = start
- * points[i] = previous + (dx[i-1], dy[i-1]) for i>=1
- */
+
 message DeltaLineString {
+    // absolute start
     Coordinate start = 1;
+    // Delta encoding
     repeated sint32 dx = 2;
     repeated sint32 dy = 3; }
 
 message DeltaRing {
+    // absolute start
     Coordinate start = 1;
+    // Delta encoding
     repeated sint32 dx = 2;
     repeated sint32 dy = 3; }
 
@@ -61,24 +64,28 @@ message Geometry {
   }
 }
 
-/** NEW in v5: Feature wrapper with attributes */
+
 message Feature {
   Geometry geometry = 1;
-  google.protobuf.Struct properties = 2; // GeoJSON Feature.properties
+    // GeoJSON feature has properties, which do contain dynamic attributes
+  google.protobuf.Struct properties = 2;
+    // GeoJSON feature often has "id"
       string id = 3;
+    // GeoJSON feature often has "bbox"
     repeated double bbox = 4;
+    // extra (dynamic) attributes
     google.protobuf.Struct extra = 5;
 }
 
 message FeatureCollection {
   // GeoJSON FeatureCollection.features
   repeated Feature features = 1;
-  // GeoJSON FeatureCollection.bbox (optional)
+  // GeoJSON FeatureCollection often contains bbox
   repeated double bbox = 2;
-  // Any other top-level keys outside {type, features, bbox, name, crs}
+  // Other (dynamic) attributes
   google.protobuf.Struct extra = 3;
-  // GeoJSON FeatureCollection.name (optional)
+  // GeoJSON often contains a name
   string name = 4;
-  // Collection CRS (optional)
+  // for different crs than wgs 84, featurecollection may contain a crs
   Crs crs = 5;
 }

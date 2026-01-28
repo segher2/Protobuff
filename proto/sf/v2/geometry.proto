@@ -30,17 +30,16 @@ message DeltaLineString {
     // absolute start
   Coordinate start = 1;
 
-  // Deltas encoding
+  // Delta encoding
   repeated sint32 dx = 2;
   repeated sint32 dy = 3;
 }
 
 
 message DeltaRing {
-        // absolute start
+    // absolute start
   Coordinate start = 1;
-
-      // Deltas encoding
+    // Delta encoding
   repeated sint32 dx = 2;
   repeated sint32 dy = 3;
 }
