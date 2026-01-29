@@ -12,3 +12,7 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[project.scripts]
+sfproto = "sfproto.cli.main:main"
+
+
