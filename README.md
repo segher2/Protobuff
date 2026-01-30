@@ -123,9 +123,12 @@ To display the available commands and options:
 sfproto encode --help
 ```
 
-## Test data 
-The repository contains a compressed data archive named `data.zip` located in the repository root. 
-Before running any scripts or experiments, this archive must be extracted.
+## Test data
+Test data is available via the following Google Drive link:  
+https://drive.google.com/drive/folders/1oYb6kB4Xo0oaSMGJBJGEs5IFiBbD-t9c?usp=sharing
+
+Please download the data and place it in the root directory of the SFProto repository.
+
 
 ### Unzipping the data archive
 #### Option 1: Using WSL/Linux 
